@@ -58,15 +58,6 @@
           selection: true,
           column: [
             {
-              label: "id",
-              prop: "id",
-              rules: [{
-                required: true,
-                message: "请输入id",
-                trigger: "blur"
-              }]
-            },
-            {
               label: "姓名",
               prop: "name",
               rules: [{
@@ -78,6 +69,7 @@
             {
               label: "年龄",
               prop: "age",
+              type: "number",
               rules: [{
                 required: true,
                 message: "请输入年龄",
@@ -87,6 +79,12 @@
             {
               label: "男女性别",
               prop: "gender",
+              type: "select",
+              dicUrl: "/api/blade-system/dict/dictionary?code=sex",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               rules: [{
                 required: true,
                 message: "请输入男女性别",
@@ -96,6 +94,9 @@
             {
               label: "出生年月日",
               prop: "birthday",
+              type: "date",
+              format: 'yyyy-MM-dd',
+              valueFormat: 'yyyy-MM-dd',
               rules: [{
                 required: true,
                 message: "请输入出生年月日",

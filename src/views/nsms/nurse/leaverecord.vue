@@ -17,15 +17,43 @@
                @current-change="currentChange"
                @size-change="sizeChange"
                @on-load="onLoad">
-      <template slot="menuLeft">
-        <el-button type="danger"
-                   size="small"
-                   icon="el-icon-delete"
-                   plain
-                   v-if="permission.leaverecord_delete"
-                   @click="handleDelete">删 除
+
+      <!--      每行的审核状态的模板-->
+      <template slot-scope="{row}" slot="approvalStatus">
+        <el-tag v-show="row.approvalStatus == '0'" type="info">未审核</el-tag>
+        <el-tag v-show="row.approvalStatus == '1'" type="danger">驳回</el-tag>
+        <el-tag v-show="row.approvalStatus == '2'" type="success">通过</el-tag>
+      </template>
+
+      <template slot="leaveShift" slot-scope="{row}">
+        <el-tag effect="plain" type="info" v-show="row.leaveShift==0">早班</el-tag>
+        <el-tag effect="plain" type="info" v-show="row.leaveShift==1">晚班</el-tag>
+      </template>
+
+
+      <template slot-scope="{ row }" slot="menu">
+        <el-button
+          type="text"
+          class="button-text"
+          icon="el-icon-view"
+          size="mini"
+          plain
+          @click="$refs.crud.rowEdit(row,index)"
+          v-show="row.approvalStatus==0"
+        >编辑
+        </el-button>
+        <el-button
+          type="text"
+          class="button-text"
+          icon="el-icon-view"
+          size="mini"
+          plain
+          @click="$refs.crud.rowDel(row)"
+          v-show="row.approvalStatus==0"
+        >删除
         </el-button>
       </template>
+
     </avue-crud>
   </basic-container>
 </template>
@@ -55,29 +83,31 @@
           border: true,
           index: true,
           viewBtn: true,
+          delBtn: false,
+          editBtn: false,
           selection: true,
           column: [
             {
-              label: "id",
-              prop: "id",
+              label: "请假类别",
+              prop: "leaveType",
+              type: "select",
+              dicUrl: "/api/blade-system/dict/dictionary?code=leave_type",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               rules: [{
                 required: true,
-                message: "请输入id",
-                trigger: "blur"
-              }]
-            },
-            {
-              label: "请假原因",
-              prop: "leaveResult",
-              rules: [{
-                required: true,
-                message: "请输入请假原因",
+                message: "请输入请假类别",
                 trigger: "blur"
               }]
             },
             {
               label: "请假日期",
               prop: "leaveDate",
+              type: "date",
+              format: 'yyyy-MM-dd',
+              valueFormat: 'yyyy-MM-dd',
               rules: [{
                 required: true,
                 message: "请输入请假日期",
@@ -87,6 +117,13 @@
             {
               label: "请假班次",
               prop: "leaveShift",
+              type: "select",
+              slot:true,
+              dicUrl: "/api/blade-system/dict/dictionary?code=shift_num",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               rules: [{
                 required: true,
                 message: "请输入请假班次",
@@ -94,26 +131,21 @@
               }]
             },
             {
-              label: "请假类别",
-              prop: "leaveType",
+              label: "请假原因",
+              prop: "leaveResult",
+              overHidden:true,
               rules: [{
                 required: true,
-                message: "请输入请假类别",
-                trigger: "blur"
-              }]
-            },
-            {
-              label: "申请人id",
-              prop: "nurseSid",
-              rules: [{
-                required: true,
-                message: "请输入申请人id",
+                message: "请输入请假原因",
                 trigger: "blur"
               }]
             },
             {
               label: "审批状态",
               prop: "approvalStatus",
+              addDisplay:false,
+              editDisplay:false,
+              slot:true,
               rules: [{
                 required: true,
                 message: "请输入审批状态",
@@ -123,6 +155,9 @@
             {
               label: "审批意见",
               prop: "approvalOpinion",
+              overHidden:true,
+              addDisplay:false,
+              editDisplay:false,
               rules: [{
                 required: true,
                 message: "请输入审批意见",
@@ -132,6 +167,8 @@
             {
               label: "审批人",
               prop: "approver",
+              addDisplay:false,
+              editDisplay:false,
               rules: [{
                 required: true,
                 message: "请输入审批人",

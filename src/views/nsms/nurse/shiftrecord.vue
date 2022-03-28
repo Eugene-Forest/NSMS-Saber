@@ -58,15 +58,6 @@
           selection: true,
           column: [
             {
-              label: "id",
-              prop: "id",
-              rules: [{
-                required: true,
-                message: "请输入id",
-                trigger: "blur"
-              }]
-            },
-            {
               label: "申请人",
               prop: "applicantSid",
               rules: [{

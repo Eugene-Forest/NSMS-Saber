@@ -18,14 +18,33 @@
                @size-change="sizeChange"
                @on-load="onLoad">
       <template slot="menuLeft">
+        <el-button type="warning"
+                   size="small"
+                   icon="el-icon-s-check"
+                   plain
+                   v-if="permission.leaverecord_approval"
+                   @click="handleApproval">审 核
+        </el-button>
         <el-button type="danger"
                    size="small"
-                   icon="el-icon-delete"
+                   icon="el-icon-s-check"
                    plain
-                   v-if="permission.leaverecord_delete"
-                   @click="handleDelete">删 除
+                   v-if="permission.leaverecord_approval_revocation"
+                   @click="handleApproval">反 审
         </el-button>
       </template>
+      <!--      每行的审核状态的模板-->
+      <template slot-scope="{row}" slot="approvalStatus">
+        <el-tag v-show="row.approvalStatus == '0'" type="info">未审核</el-tag>
+        <el-tag v-show="row.approvalStatus == '1'" type="danger">驳回</el-tag>
+        <el-tag v-show="row.approvalStatus == '2'" type="success">通过</el-tag>
+      </template>
+
+      <template slot="leaveShift" slot-scope="{row}">
+        <el-tag effect="plain" type="info" v-show="row.leaveShift==0">早班</el-tag>
+        <el-tag effect="plain" type="info" v-show="row.leaveShift==1">晚班</el-tag>
+      </template>
+
     </avue-crud>
   </basic-container>
 </template>
@@ -55,29 +74,32 @@
           border: true,
           index: true,
           viewBtn: true,
+          delBtn: false,
+          editBtn: false,
+          addBtn: false,
           selection: true,
           column: [
             {
-              label: "id",
-              prop: "id",
+              label: "请假类别",
+              prop: "leaveType",
+              type: "select",
+              dicUrl: "/api/blade-system/dict/dictionary?code=leave_type",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               rules: [{
                 required: true,
-                message: "请输入id",
-                trigger: "blur"
-              }]
-            },
-            {
-              label: "请假原因",
-              prop: "leaveResult",
-              rules: [{
-                required: true,
-                message: "请输入请假原因",
+                message: "请输入请假类别",
                 trigger: "blur"
               }]
             },
             {
               label: "请假日期",
               prop: "leaveDate",
+              type: "date",
+              format: 'yyyy-MM-dd',
+              valueFormat: 'yyyy-MM-dd',
               rules: [{
                 required: true,
                 message: "请输入请假日期",
@@ -87,6 +109,13 @@
             {
               label: "请假班次",
               prop: "leaveShift",
+              type: "select",
+              slot:true,
+              dicUrl: "/api/blade-system/dict/dictionary?code=shift_num",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               rules: [{
                 required: true,
                 message: "请输入请假班次",
@@ -94,26 +123,37 @@
               }]
             },
             {
-              label: "请假类别",
-              prop: "leaveType",
+              label: "请假原因",
+              prop: "leaveResult",
+              overHidden:true,
               rules: [{
                 required: true,
-                message: "请输入请假类别",
+                message: "请输入请假原因",
                 trigger: "blur"
               }]
             },
             {
-              label: "申请人id",
-              prop: "nurseSid",
+              label: "申请人",
+              prop: "nurseName",
               rules: [{
                 required: true,
-                message: "请输入申请人id",
+                message: "请输入申请人",
+                trigger: "blur"
+              }]
+            },
+            {
+              label: "申请人员工编号",
+              prop: "wNo",
+              rules: [{
+                required: true,
+                message: "请输入申请人",
                 trigger: "blur"
               }]
             },
             {
               label: "审批状态",
               prop: "approvalStatus",
+              slot:true,
               rules: [{
                 required: true,
                 message: "请输入审批状态",
@@ -123,18 +163,10 @@
             {
               label: "审批意见",
               prop: "approvalOpinion",
+              overHidden:true,
               rules: [{
                 required: true,
                 message: "请输入审批意见",
-                trigger: "blur"
-              }]
-            },
-            {
-              label: "审批人",
-              prop: "approver",
-              rules: [{
-                required: true,
-                message: "请输入审批人",
                 trigger: "blur"
               }]
             },
@@ -147,10 +179,11 @@
       ...mapGetters(["permission"]),
       permissionList() {
         return {
-          addBtn: this.vaildData(this.permission.leaverecord_add, false),
-          viewBtn: this.vaildData(this.permission.leaverecord_view, false),
-          delBtn: this.vaildData(this.permission.leaverecord_delete, false),
-          editBtn: this.vaildData(this.permission.leaverecord_edit, false)
+          approvalBtn: this.vaildData(this.permission.leaverecord_approval, false),
+          revocationBtn: this.vaildData(this.permission.leaverecord_approval_revocation, false),
+          // viewBtn: this.vaildData(this.permission.leaverecord_view, false),
+          // delBtn: this.vaildData(this.permission.leaverecord_delete, false),
+          // editBtn: this.vaildData(this.permission.leaverecord_edit, false)
         };
       },
       ids() {
@@ -162,6 +195,29 @@
       }
     },
     methods: {
+      handleApproval() {
+        // todo 待改造
+        if (this.selectionList.length === 0) {
+          this.$message.warning("请选择至少一条数据");
+          return;
+        }
+        this.$confirm("确定将选择数据删除?", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        })
+          .then(() => {
+            return remove(this.ids);
+          })
+          .then(() => {
+            this.onLoad(this.page);
+            this.$message({
+              type: "success",
+              message: "操作成功!"
+            });
+            this.$refs.crud.toggleSelection();
+          });
+      },
       rowSave(row, done, loading) {
         add(row).then(() => {
           done();

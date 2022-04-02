@@ -53,3 +53,11 @@ export const getDictTree = () => {
     method: 'get'
   })
 }
+
+export const getDictionary = (params) => {
+  return request({
+    url: '/api/blade-system/dict/dictionary',
+    method: 'get',
+    params,
+  })
+}

@@ -280,7 +280,7 @@
               type: "tree",
               multiple: true,
               dicData: [],
-              hide: true,
+              // hide: true,
               props: {
                 label: "postName",
                 value: "id"

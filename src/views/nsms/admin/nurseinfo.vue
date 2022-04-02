@@ -26,6 +26,13 @@
                    @click="handleDelete">删 除
         </el-button>
       </template>
+
+<!--      &lt;!&ndash;      每行的就职状态的模板&ndash;&gt;-->
+<!--      <template slot-scope="{row}" slot="workingCondition">-->
+<!--        <div v-show="row.workingCondition == '1'">在职</div>-->
+<!--        <div v-show="row.workingCondition == '2'">离职</div>-->
+<!--      </template>-->
+
     </avue-crud>
   </basic-container>
 </template>
@@ -33,6 +40,8 @@
 <script>
   import {getList, getDetail, add, update, remove} from "@/api/nsms/nurseinfo";
   import {mapGetters} from "vuex";
+  import {getDictionary} from "@/api/system/dict";
+  import {getDeptTree} from "@/api/system/dept";
 
   export default {
     data() {
@@ -77,22 +86,24 @@
               }]
             },
             {
-              label: "男女性别",
-              prop: "gender",
+              label: "性别",
+              prop: 'gender',
               type: "select",
-              dicUrl: "/api/blade-system/dict/dictionary?code=sex",
+              dicData: [
+              ],
+              // dicUrl: "/api/blade-system/dict/dictionary?code=sex",
               props: {
                 label: 'dictValue',
                 value: 'dictKey'
               },
               rules: [{
                 required: true,
-                message: "请输入男女性别",
-                trigger: "blur"
+                message: "请选择男女性别",
+                trigger: "click"
               }]
             },
             {
-              label: "出生年月日",
+              label: "出生年月",
               prop: "birthday",
               type: "date",
               format: 'yyyy-MM-dd',
@@ -112,27 +123,45 @@
                 trigger: "blur"
               }]
             },
-            {
-              label: "职工号",
-              prop: "wNo",
-              rules: [{
-                required: true,
-                message: "请输入职工号",
-                trigger: "blur"
-              }]
-            },
+            // {
+            //   label: "职工号",
+            //   prop: "wNo",
+            //   rules: [{
+            //     required: true,
+            //     message: "请输入职工号",
+            //     trigger: "blur"
+            //   }]
+            // },
             {
               label: "职位",
               prop: "position",
+              type: "select",
+              width: 170,
+              search: true,
+              searchSpan: 4,
+              span: 8,
+              dicData: [],
+              // dicUrl: "/api/blade-system/dict/dictionary?code=post",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               rules: [{
                 required: true,
-                message: "请输入职位",
+                message: "请选择职位",
                 trigger: "blur"
               }]
             },
             {
               label: "部门",
               prop: "department",
+              type: "tree",
+              dicData: [],
+              // dicUrl: "/api/blade-system/dept/tree",
+              props: {
+                label: 'title',
+                value: 'key'
+              },
               rules: [{
                 required: true,
                 message: "请输入部门",
@@ -142,10 +171,17 @@
             {
               label: "就职状态",
               prop: "workingCondition",
+              type: "select",
+              dicData: [],
+              // dicUrl: "/api/blade-system/dict/dictionary?code=working_condition",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               rules: [{
                 required: true,
-                message: "请输入就职状态",
-                trigger: "blur"
+                message: "请选择就职状态",
+                trigger: "click"
               }]
             },
           ]
@@ -171,7 +207,34 @@
         return ids.join(",");
       }
     },
+    created() {
+      this.initSysData();
+    },
     methods: {
+      //初始化并获取字典
+      initSysData() {
+
+        getDictionary({code:"sex"}).then(res => {
+          const column = this.findObject(this.option.column, 'gender');
+          column.dicData = res.data.data;
+        });
+
+        getDictionary({code:"post"}).then(res => {
+          const column = this.findObject(this.option.column, 'position');
+          column.dicData = res.data.data;
+        });
+
+        getDictionary({code:"working_condition"}).then(res => {
+          const column = this.findObject(this.option.column, 'workingCondition');
+          column.dicData = res.data.data;
+        });
+
+        getDeptTree().then(res => {
+          const column = this.findObject(this.option.column, 'department');
+          column.dicData = res.data.data;
+        });
+
+      },
       rowSave(row, done, loading) {
         add(row).then(() => {
           done();

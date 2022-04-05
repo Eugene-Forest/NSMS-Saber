@@ -48,3 +48,18 @@ export const update = (row) => {
   })
 }
 
+export const checkIn = (row) => {
+  return request({
+    url: '/api/nsms/leaverecord/checkIn',
+    method: 'post',
+    data: row
+  })
+}
+
+export const recheckIn = (row) => {
+  return request({
+    url: '/api/nsms/leaverecord/recheckIn',
+    method: 'post',
+    data: row
+  })
+}

@@ -91,6 +91,7 @@
               label: "请假类别",
               prop: "leaveType",
               type: "select",
+              span:24,
               dicUrl: "/api/blade-system/dict/dictionary?code=leave_type",
               props: {
                 label: 'dictValue',
@@ -133,7 +134,11 @@
             {
               label: "请假原因",
               prop: "leaveResult",
-              overHidden:true,
+              type: "textarea",
+              span: 24,
+              minRows: 4,
+              maxRows: 8,
+              overHidden: true,
               rules: [{
                 required: true,
                 message: "请输入请假原因",

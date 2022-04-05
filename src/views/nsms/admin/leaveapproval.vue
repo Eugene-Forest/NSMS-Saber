@@ -23,7 +23,7 @@
                    icon="el-icon-s-check"
                    plain
                    v-if="permission.leaverecord_approval"
-                   @click="handleApproval">审 核
+                   @click="checkInLeaveRecord">审 核
         </el-button>
         <el-button type="danger"
                    size="small"
@@ -46,12 +46,44 @@
       </template>
 
     </avue-crud>
+
+
+
+    <el-drawer id="approval-form"
+               title="请假审核"
+               size="1200px"
+               append-to-body
+               :destroy-on-close="true"
+               @close="handleDialogClose"
+               :visible.sync="dialogVisible">
+
+      <avue-form v-if="dialogVisible" :option="option" v-model="form" ref="formMain">
+        <template slot-scope="scope" slot="menuForm">
+          <el-button type="success" size="mini" icon="el-icon-success"
+                     @click="handleSubmit(true)"
+                     :loading="formOnLoading">通 过
+          </el-button>
+          <el-button type="danger" size="mini" icon="el-icon-error"
+                     @click="handleSubmit(false)"
+                     :loading="formOnLoading">驳 回
+          </el-button>
+          <el-button size="mini" icon="el-icon-close"
+                     @click="dialogVisible = false"
+                     :loading="formOnLoading">退出审核
+          </el-button>
+        </template>
+      </avue-form>
+
+
+    </el-drawer>
+
   </basic-container>
 </template>
 
 <script>
-  import {getList, getDetail, add, update, remove} from "@/api/nsms/leaverecord";
+import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api/nsms/leaverecord";
   import {mapGetters} from "vuex";
+  import {getDictionary} from "@/api/system/dict";
 
   export default {
     data() {
@@ -65,6 +97,8 @@
           total: 0
         },
         selectionList: [],
+        dialogVisible:false,
+        formOnLoading: false,
         option: {
           height: 'auto',
           calcHeight: 210,
@@ -83,6 +117,7 @@
               label: "请假类别",
               prop: "leaveType",
               type: "select",
+              span:24,
               dicUrl: "/api/blade-system/dict/dictionary?code=leave_type",
               props: {
                 label: 'dictValue',
@@ -125,6 +160,10 @@
             {
               label: "请假原因",
               prop: "leaveResult",
+              type: "textarea",
+              span: 24,
+              minRows: 4,
+              maxRows: 8,
               overHidden:true,
               rules: [{
                 required: true,
@@ -134,7 +173,7 @@
             },
             {
               label: "申请人",
-              prop: "nurseName",
+              prop: "nurseSid",
               rules: [{
                 required: true,
                 message: "请输入申请人",
@@ -142,8 +181,11 @@
               }]
             },
             {
-              label: "申请人员工编号",
+              label: "员工编号",
               prop: "wNo",
+              editDisplay:false,
+              viewDisplay:false,
+              hide:true,
               rules: [{
                 required: true,
                 message: "请输入申请人",
@@ -153,6 +195,8 @@
             {
               label: "审批状态",
               prop: "approvalStatus",
+              editDisplay:false,
+              viewDisplay:false,
               slot:true,
               rules: [{
                 required: true,
@@ -163,6 +207,10 @@
             {
               label: "审批意见",
               prop: "approvalOpinion",
+              type: "textarea",
+              span: 24,
+              minRows: 4,
+              maxRows: 8,
               overHidden:true,
               rules: [{
                 required: true,
@@ -192,11 +240,19 @@
           ids.push(ele.id);
         });
         return ids.join(",");
-      }
+      },
+    },
+    created() {
+      this.initSysData();
     },
     methods: {
+      initSysData(){
+        // getDictionary({code:"approval_status"}).then(res => {
+        //   const column = this.findObject(this.option.column, 'approvalStatus');
+        //   column.dicData = res.data.data;
+        // });
+      },
       handleApproval() {
-        // todo 待改造
         if (this.selectionList.length === 0) {
           this.$message.warning("请选择至少一条数据");
           return;
@@ -217,6 +273,80 @@
             });
             this.$refs.crud.toggleSelection();
           });
+      },
+      //名字改为openCheckInDialog
+      checkInLeaveRecord(){
+        if (this.selectionList.length === 0||this.selectionList.length>1) {
+          this.$message.warning("请选择一条数据");
+          return;
+        }
+        //打开抽屉或窗口用来审核、
+        //隐藏列
+        let approvalStatus = this.findObject(this.option.column, 'approvalStatus');
+        approvalStatus.display=false;
+        let wNo = this.findObject(this.option.column, 'wNo');
+        wNo.display=false;
+        //禁止编辑
+        this.option.column.forEach(x => {
+          x.disabled=true;
+        });
+        let approvalOpinion = this.findObject(this.option.column, 'approvalOpinion');
+        approvalOpinion.disabled=false;
+        //禁止原生按钮
+        this.option.emptyBtn=false;
+        this.option.submitBtn=false;
+        //显示抽屉
+        this.dialogVisible=true;
+        //赋值
+        this.form=this.selectionList[0];
+      },
+      handleDialogClose(){
+        //清空
+        this.form={};
+        //回复列状态
+        let approvalStatus = this.findObject(this.option.column, 'approvalStatus');
+        approvalStatus.display=true;
+        let wNo = this.findObject(this.option.column, 'wNo');
+        wNo.display=true;
+        this.option.column.forEach(x => {
+          x.disabled=false;
+        });
+        //回复原生按钮状态
+        this.option.emptyBtn=true;
+        this.option.submitBtn=true;
+      },
+      recheckInLeaveRecord(){
+        if (this.selectionList.length === 0||this.selectionList.length>1) {
+          this.$message.warning("请选择一条数据");
+          return;
+        }
+
+      },
+      handleSubmit(flag){
+        //验证必填项
+        this.$refs.formMain.validate(valid => {
+          if (valid){
+            let data=this.form;
+            if (flag){
+              data["approvalStatus"]=2;
+            }else {
+              data["approvalStatus"]=1;
+            }
+            checkIn(data).then(() => {
+              this.formOnLoading = false;
+              //隐藏抽屉
+              this.dialogVisible = false;
+              //刷新
+              this.onLoad(this.page);
+              this.$message({type: 'success', message: '操作成功!'});
+            }, error => {
+              this.$message.error('业务出错！');
+              // console.log(error);
+            });
+          }else {
+            this.$message.warning('请检查入库申请单的必填项！');
+          }
+        })
       },
       rowSave(row, done, loading) {
         add(row).then(() => {

@@ -30,14 +30,15 @@
                    icon="el-icon-s-check"
                    plain
                    v-if="permission.leaverecord_approval_revocation"
-                   @click="handleApproval">反 审
+                   @click="recheckInLeaveRecord">反 审
         </el-button>
       </template>
+
       <!--      每行的审核状态的模板-->
-      <template slot-scope="{row}" slot="approvalStatus">
-        <el-tag v-show="row.approvalStatus == '0'" type="info">未审核</el-tag>
-        <el-tag v-show="row.approvalStatus == '1'" type="danger">驳回</el-tag>
-        <el-tag v-show="row.approvalStatus == '2'" type="success">通过</el-tag>
+      <template slot="approvalStatus" slot-scope="{row}">
+        <el-tag v-show="row.approvalStatus===0" type="info">未审核</el-tag>
+        <el-tag v-show="row.approvalStatus===1" type="danger">驳回</el-tag>
+        <el-tag v-show="row.approvalStatus===2" type="success">通过</el-tag>
       </template>
 
       <template slot="leaveShift" slot-scope="{row}">
@@ -59,19 +60,32 @@
 
       <avue-form v-if="dialogVisible" :option="option" v-model="form" ref="formMain">
         <template slot-scope="scope" slot="menuForm">
-          <el-button type="success" size="mini" icon="el-icon-success"
-                     @click="handleSubmit(true)"
-                     :loading="formOnLoading">通 过
-          </el-button>
-          <el-button type="danger" size="mini" icon="el-icon-error"
-                     @click="handleSubmit(false)"
-                     :loading="formOnLoading">驳 回
-          </el-button>
-          <el-button size="mini" icon="el-icon-close"
-                     @click="dialogVisible = false"
-                     :loading="formOnLoading">退出审核
-          </el-button>
+         <div v-if="!recheck">
+           <el-button type="success" size="mini" icon="el-icon-success"
+                      @click="handleSubmit(true)"
+                      :loading="formOnLoading">通 过
+           </el-button>
+           <el-button type="danger" size="mini" icon="el-icon-error"
+                      @click="handleSubmit(false)"
+                      :loading="formOnLoading">驳 回
+           </el-button>
+           <el-button size="mini" icon="el-icon-close"
+                      @click="dialogVisible = false"
+                      :loading="formOnLoading">退 出 审 核
+           </el-button>
+         </div>
+          <div v-if="recheck">
+            <el-button size="mini" icon="el-icon-close" round type="danger"
+                       @click="recheckBack"
+                       :loading="formOnLoading">撤 销 审 核
+            </el-button>
+            <el-button size="mini" icon="el-icon-close" round
+                       @click="dialogVisible = false"
+                       :loading="formOnLoading">退 出 反 审
+            </el-button>
+          </div>
         </template>
+
       </avue-form>
 
 
@@ -99,6 +113,7 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
         selectionList: [],
         dialogVisible:false,
         formOnLoading: false,
+        recheck:false,
         option: {
           height: 'auto',
           calcHeight: 210,
@@ -195,9 +210,15 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
             {
               label: "审批状态",
               prop: "approvalStatus",
+              type: "select",
+              dicUrl: "/api/blade-system/dict/dictionary?code=approval_status",
               editDisplay:false,
               viewDisplay:false,
               slot:true,
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               rules: [{
                 required: true,
                 message: "请输入审批状态",
@@ -274,10 +295,17 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
             this.$refs.crud.toggleSelection();
           });
       },
-      //名字改为openCheckInDialog
       checkInLeaveRecord(){
         if (this.selectionList.length === 0||this.selectionList.length>1) {
           this.$message.warning("请选择一条数据");
+          return;
+        }
+        //赋值
+        this.form=this.selectionList[0];
+        //判断状态是否为已审核
+        if (this.form["approvalStatus"]!==0){
+          this.$message.warning("请确认状态是否为未审核！");
+          this.form={};
           return;
         }
         //打开抽屉或窗口用来审核、
@@ -297,8 +325,6 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
         this.option.submitBtn=false;
         //显示抽屉
         this.dialogVisible=true;
-        //赋值
-        this.form=this.selectionList[0];
       },
       handleDialogClose(){
         //清空
@@ -314,13 +340,40 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
         //回复原生按钮状态
         this.option.emptyBtn=true;
         this.option.submitBtn=true;
+        //恢复审核复审状态判断值
+        this.recheck=false;
       },
       recheckInLeaveRecord(){
         if (this.selectionList.length === 0||this.selectionList.length>1) {
           this.$message.warning("请选择一条数据");
           return;
         }
+        //隐藏列
+        let wNo = this.findObject(this.option.column, 'wNo');
+        wNo.display=false;
+        //禁止编辑
+        this.option.column.forEach(x => {
+          x.disabled=true;
+        });
+        //禁止原生按钮
+        this.option.emptyBtn=false;
+        this.option.submitBtn=false;
 
+        //赋值
+        this.form=this.selectionList[0];
+        //先判断数据是否已经被审核，如果被审核则不能反审，即不出现反审按钮
+        if (this.form["approvalStatus"]==0){
+          this.$message.info("此数据处于未审核状态，不能反审！");
+          this.recheck=false;
+          this.form={};
+        }else if (this.form["approvalStatus"]==1||this.form["approvalStatus"]==2){
+          this.recheck=true;
+          //显示抽屉
+          this.dialogVisible=true;
+        }else {
+          this.$message.warning("请确认被选数据的审核状态是否正确！");
+          this.form={};
+        }
       },
       handleSubmit(flag){
         //验证必填项
@@ -344,7 +397,37 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
               // console.log(error);
             });
           }else {
-            this.$message.warning('请检查入库申请单的必填项！');
+            this.$message.warning('请检查必填项！');
+          }
+        })
+      },
+      recheckBack(){
+        //撤销审核
+        this.$refs.formMain.validate(valid => {
+          if (valid){
+            let data=this.form;
+            if (this.form["approvalStatus"]!=1&&this.form["approvalStatus"]!=2){
+              this.$message({message:"请检查必填项",type:"warning",customClass:'topToDialogIndex'});
+              this.formOnLoading = false;
+              //隐藏抽屉
+              this.dialogVisible = false;
+              //刷新
+              this.onLoad(this.page);
+              return;
+            }
+            recheckIn(data).then(() => {
+              this.formOnLoading = false;
+              //隐藏抽屉
+              this.dialogVisible = false;
+              //刷新
+              this.onLoad(this.page);
+              this.$message({type: 'success', message: '操作成功!'});
+            }, error => {
+              this.$message.error('业务出错！');
+              // console.log(error);
+            });
+          }else {
+            this.$message.warning('请检查必填项！');
           }
         })
       },
@@ -459,4 +542,7 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
 </script>
 
 <style>
+  .topToDialogIndex{
+    z-index: 3000 !important;
+  }
 </style>

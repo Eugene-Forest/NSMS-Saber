@@ -48,3 +48,34 @@ export const update = (row) => {
   })
 }
 
+
+export const checkIn = (row) => {
+  return request({
+    url: '/api/nsms/shiftrecord/checkIn',
+    method: 'post',
+    data: row
+  })
+}
+export const recheckIn = (row) => {
+  return request({
+    url: '/api/nsms/shiftrecord/recheckIn',
+    method: 'post',
+    data: row
+  })
+}
+
+export const confer = (row) => {
+  return request({
+    url: '/api/nsms/shiftrecord/confer',
+    method: 'post',
+    data: row
+  })
+}
+
+export const reConfer = (row) => {
+  return request({
+    url: '/api/nsms/shiftrecord/reConfer',
+    method: 'post',
+    data: row
+  })
+}

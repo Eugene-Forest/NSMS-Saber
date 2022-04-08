@@ -51,7 +51,7 @@
 
 
     <el-drawer id="approval-form"
-               title="请假审核"
+               :title="approvalFormTitle"
                size="1200px"
                append-to-body
                :destroy-on-close="true"
@@ -114,6 +114,7 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
         dialogVisible:false,
         formOnLoading: false,
         recheck:false,
+        approvalFormTitle: '',
         option: {
           height: 'auto',
           calcHeight: 210,
@@ -325,6 +326,7 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
         this.option.submitBtn=false;
         //显示抽屉
         this.dialogVisible=true;
+        this.approvalFormTitle='请假记录审核';
       },
       handleDialogClose(){
         //清空
@@ -342,6 +344,7 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
         this.option.submitBtn=true;
         //恢复审核复审状态判断值
         this.recheck=false;
+        this.approvalFormTitle='';
       },
       recheckInLeaveRecord(){
         if (this.selectionList.length === 0||this.selectionList.length>1) {
@@ -370,6 +373,7 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
           this.recheck=true;
           //显示抽屉
           this.dialogVisible=true;
+          this.approvalFormTitle='请假记录反审';
         }else {
           this.$message.warning("请确认被选数据的审核状态是否正确！");
           this.form={};

@@ -42,6 +42,7 @@
   import {mapGetters} from "vuex";
   import {getDictionary} from "@/api/system/dict";
   import {getDeptTree} from "@/api/system/dept";
+  import {getPostList} from "@/api/system/post";
 
   export default {
     data() {
@@ -143,8 +144,8 @@
               dicData: [],
               // dicUrl: "/api/blade-system/dict/dictionary?code=post",
               props: {
-                label: 'dictValue',
-                value: 'dictKey'
+                label: 'postName',
+                value: 'id'
               },
               rules: [{
                 required: true,
@@ -219,9 +220,9 @@
           column.dicData = res.data.data;
         });
 
-        getDictionary({code:"post"}).then(res => {
-          const column = this.findObject(this.option.column, 'position');
-          column.dicData = res.data.data;
+        getPostList().then(res => {
+            const column = this.findObject(this.option.column, 'position');
+            column.dicData = res.data.data;
         });
 
         getDictionary({code:"working_condition"}).then(res => {

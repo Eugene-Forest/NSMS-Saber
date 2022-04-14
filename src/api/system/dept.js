@@ -56,3 +56,9 @@ export const getDeptTree = (tenantId) => {
   })
 }
 
+export const selectByUser = () => {
+  return request({
+    url: '/api/blade-system/dept/selectByUser',
+    method: 'get',
+  })
+}

@@ -48,3 +48,27 @@ export const update = (row) => {
   })
 }
 
+export const getRQCodeRandomly = () => {
+  return request({
+    url: '/api/nsms/clockinconfig/getRQCodeRandomly',
+    method: 'get',
+  })
+}
+
+export const getRQCodeByMessage = (message) => {
+  return request({
+    url: '/api/nsms/clockinconfig/getRQCodeByMessage',
+    method: 'get',
+    params: {
+      message,
+    }
+  })
+}
+
+export const submitVo = (row) => {
+  return request({
+    url: '/api/nsms/clockinconfig/submitVo',
+    method: 'post',
+    data: row
+  })
+}

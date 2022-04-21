@@ -1,0 +1,460 @@
+<template>
+  <basic-container>
+    <avue-crud :option="expectationOption"
+               :table-loading="expectationLoading"
+               :data="expectationData"
+               :page="expectationPage"
+               :permission="permissionList"
+               :before-open="beforeOpen"
+               v-model="expectationForm"
+               ref="crud"
+               @row-update="rowUpdate"
+               @row-save="rowSave"
+               @row-del="rowDel"
+               @search-change="searchChange"
+               @search-reset="searchReset"
+               @selection-change="selectionChange"
+               @current-change="currentChange"
+               @size-change="sizeChange"
+               @on-load="onLoad">
+      <template slot="menuLeft">
+        <el-button type="primary"
+                   size="small"
+                   icon="el-icon-add"
+                   plain
+                   v-if="permission.expectation_add"
+                   @click="addExpectation">添 加 排 班 期 望
+        </el-button>
+        <el-button type="danger"
+                   size="small"
+                   icon="el-icon-delete"
+                   plain
+                   v-if="permission.expectation_delete"
+                   @click="handleDelete">删 除
+        </el-button>
+      </template>
+    </avue-crud>
+
+    <el-dialog id="approval-form"
+               :title="dialogTitle"
+               size="1200px"
+               append-to-body
+               :destroy-on-close="true"
+               @close="handleDialogClose"
+               :visible.sync="dialogVisible">
+
+      <avue-form v-if="dialogVisible" :option="expectationOption" v-model="expectationForm" ref="formMain">
+        <template slot-scope="scope" slot="menuForm">
+          <el-button type="success" size="mini" icon="el-icon-success"
+                     @click="handleSubmit"
+                     >提 交 保 存
+          </el-button>
+          <el-button size="mini" icon="el-icon-close"
+                     @click="dialogVisible=false"
+                     > 退 出
+          </el-button>
+        </template>
+      </avue-form>
+
+
+    </el-dialog>
+  </basic-container>
+</template>
+
+<script>
+import {getList, getDetail, add, update, remove, getPriority} from "@/api/nsms/expectation";
+  import {mapGetters} from "vuex";
+import {select} from "@/api/nsms/schedulingreference";
+
+import dayjs from "dayjs";
+
+  export default {
+    name:"reference-expectation",
+    props: ['referenceSid','state'],
+    data() {
+      //对于校验，必须要有所有情况下的callback();不然会出现无法提交的情况，而且这种异常没有报错
+      var validateRequire = (rule, value, callback)=>  {
+        if (this.expectationForm.expectationType!==0||this.expectationForm.expectationType!==1){
+          if (value.length!=2) {
+            callback(new Error('请选择时间区间'));
+          }
+          //判断是否再排班时间区间内
+          if (dayjs(value[0]).isBefore(this.referenceDateRange[0])
+            ||dayjs(value[1]).isAfter(this.referenceDateRange[1])){
+            callback(new Error('请选择正确的时间区间'));
+          }
+          callback();
+        }else {
+          callback();
+        }
+      };
+      var validateDayNumber = (rule, value, callback)=>  {
+        if (value<=0){
+          callback(new Error('请输入至少大于1的数字'));
+        }
+        //判断数值是否合理
+        var number=dayjs(this.referenceDateRange[1]).diff(this.referenceDateRange[0],"day")
+        //number为日期之间的差，需要+1
+        number=number+1;
+        if (value>number){
+          callback(new Error('请输入小于等于'+number+'的数字'));
+        }
+        //完成校验后，全部符合，记得 callback(); 结束校验
+        callback();
+      };
+      return {
+        expectationForm: {},
+        query: {},
+        expectationLoading: true,
+        expectationPage: {
+          pageSize: 10,
+          currentPage: 1,
+          total: 0
+        },
+        selectionList: [],
+        // 用来校验时间区间
+        referenceDateRange:[],
+        dialogTitle:'',
+        dialogVisible:false,
+        addDialog:false,
+        viewDialog:false,
+        editDialog:false,
+        emptyText: '暂无数据',
+        expectationOption: {
+          height: 'auto',
+          calcHeight: 210,
+          searchShow: true,
+          searchMenuSpan: 6,
+          tip: false,
+          border: true,
+          index: true,
+          viewBtn: false,
+          editBtn:false,
+          addBtn:false,
+          selection: true,
+          column: [
+            {
+              label: "对应的排班依据表",
+              prop: "referenceSid",
+              labelWidth:160,
+              hide:true,
+              disabled:true,
+              span:24,
+              type: "select",
+              dicData:[],
+              // dicUrl: "/api/nsms/schedulingreference/select",
+              props: {
+                label: 'title',
+                value: 'id'
+              },
+              rules: [{
+                required: true,
+                message: "请输入对应的排班依据表id",
+                trigger: "blur"
+              }]
+            },
+            // {
+            //   label: "申请人",
+            //   prop: "nurseSid",
+            //   display:false,
+            // },
+            {
+              label: "期望类型",
+              prop: "expectationType",
+              type: "select",
+              dicUrl: "/api/blade-system/dict/dictionary?code=expectation_type",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
+              rules: [{
+                required: true,
+                message: "请输入期望类型",
+                trigger: "blur"
+              }]
+            },
+            {
+              label: "优先级",
+              prop: "priority",
+              disabled:true,
+              rules: [{
+                required: true,
+                message: "请输入优先级",
+                trigger: "blur"
+              }]
+            },
+            {
+              label: "日期范围",
+              prop: "dateRange",
+              span:24,
+              type: "daterange",
+              format:'yyyy-MM-dd',
+              valueFormat:'yyyy-MM-dd',
+              startPlaceholder: '请选择排班时间区间的时间',
+              endPlaceholder: '请选择排班时间区间的时间',
+              pickerOptions: {
+                disabledDate(time) {
+                  return time.getTime() < Date.now();
+                },
+              },
+              rules: [
+                { validator: validateRequire, trigger: 'blur' },
+                {
+                  required: true,
+                  message: "请选择时间区间",
+                  trigger: "blur"
+                }],
+
+            },
+            {
+              label: "天数",
+              prop: "dayNumber",
+              type: "number",
+              rules: [{
+                required: true,
+                message: "请输入天数",
+                trigger: "blur"
+              },
+                { validator: validateDayNumber, trigger: 'blur' }
+              ]
+            },
+            {
+              label: "实现状态",
+              prop: "actualState",
+              type: "select",
+              display:false,
+              dicUrl: "/api/blade-system/dict/dictionary?code=actual_state",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
+            },
+          ]
+        },
+        expectationData: []
+      };
+    },
+    watch:{
+      'expectationForm.expectationType' : function (newValue,oldValue) {
+        if (newValue!=null){
+          if (newValue!==oldValue){
+            // expectationType : 0、1为天数，显示默认排班时间区间
+            if (newValue===0||newValue===1){
+              this.expectationForm.dateRange=this.referenceDateRange;
+              const number=dayjs(this.referenceDateRange[1]).diff(this.referenceDateRange[0],"day")
+              this.expectationForm.dayNumber=number;
+            }else {
+              this.expectationForm.dateRange=[];
+              this.expectationForm.dayNumber=null;
+            }
+          }
+        }
+      },
+      'expectationForm.dateRange' : function (newValue,oldValue) {
+        if (newValue!=null&&newValue.length==2){
+          //number为日期之间的差，需要+1
+          const number=dayjs(newValue[1]).diff(newValue[0],"day");
+          this.expectationForm.dayNumber=number+1;
+        }
+      }
+    },
+    computed: {
+      ...mapGetters(["permission"]),
+      permissionList() {
+        return {
+          addBtn: this.vaildData(this.permission.expectation_add, false),
+          viewBtn: this.vaildData(this.permission.expectation_view, false),
+          delBtn: this.vaildData(this.permission.expectation_delete, false),
+          editBtn: this.vaildData(this.permission.expectation_edit, false)
+        };
+      },
+      ids() {
+        let ids = [];
+        this.selectionList.forEach(ele => {
+          ids.push(ele.id);
+        });
+        return ids.join(",");
+      },
+    },
+    created() {
+      this.init();
+    },
+    methods: {
+      init(){
+        //资源初始化
+        select().then(res=>{
+          const column = this.findObject(this.expectationOption.column, 'referenceSid');
+          column.dicData = res.data.data;
+          column.dicData.forEach(x=>{
+            if (x.id===this.referenceSid){
+              this.referenceDateRange=x.dateRange;
+              return;
+            }
+          })
+        })
+      },
+      addExpectation(){
+        //布局初始化，通过不同类型的期望显示不同的字段。同时提交验证也需要针对性适应
+        this.dialogVisible=true;
+        this.addDialog=true;
+        this.dialogTitle="添加排班期望";
+        //取消显示默认提交按钮
+        this.expectationOption.submitBtn=false;
+        this.expectationOption.emptyBtn=false;
+        let id=this.referenceSid;
+        getPriority(id).then(res=>{
+          this.expectationForm.priority=res.data.data;
+        })
+        this.expectationForm.referenceSid=this.referenceSid;
+      },
+      handleDialogClose(){
+        //关闭窗口
+        this.dialogVisible=false;
+        this.dialogTitle="";
+        //清除状态
+        this.addDialog=false;
+        this.viewDialog=false;
+        this.editDialog=false;
+        this.expectationOption.submitBtn=true;
+        this.expectationOption.emptyBtn=true;
+        //刷新
+        this.onLoad(this.expectationPage);
+      },
+      handleSubmit(){
+        console.log(this.expectationForm)
+        this.$refs.formMain.validate(valid => {
+          if (valid){
+            let data=this.expectationForm;
+            add(data).then(() => {
+              // this.formOnLoading = false;
+              //关闭弹窗
+              // this.handleDialogClose();
+              this.dialogVisible=false;
+              this.$message({type: 'success', message: '操作成功!'});
+            }, error => {
+              this.$message.error('业务出错！');
+              // console.log(error);
+            });
+          }else {
+            this.$message({message:"请检查必填项",type:"warning",customClass:'topToDialogIndex'});
+          }
+        })
+      },
+      rowSave(row, done, loading) {
+        add(row).then(() => {
+          done();
+          this.onLoad(this.expectationPage);
+          this.$message({
+            type: "success",
+            message: "操作成功!"
+          });
+        }, error => {
+          window.console.log(error);
+          loading();
+        });
+      },
+      rowUpdate(row, index, done, loading) {
+        update(row).then(() => {
+          done();
+          this.onLoad(this.expectationPage);
+          this.$message({
+            type: "success",
+            message: "操作成功!"
+          });
+        }, error => {
+          window.console.log(error);
+          loading();
+        });
+      },
+      rowDel(row) {
+        this.$confirm("确定将选择数据删除?", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        })
+          .then(() => {
+            return remove(row.id);
+          })
+          .then(() => {
+            this.onLoad(this.expectationPage);
+            this.$message({
+              type: "success",
+              message: "操作成功!"
+            });
+          });
+      },
+      handleDelete() {
+        if (this.selectionList.length === 0) {
+          this.$message.warning("请选择至少一条数据");
+          return;
+        }
+        this.$confirm("确定将选择数据删除?", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        })
+          .then(() => {
+            return remove(this.ids);
+          })
+          .then(() => {
+            this.onLoad(this.expectationPage);
+            this.$message({
+              type: "success",
+              message: "操作成功!"
+            });
+            this.$refs.crud.toggleSelection();
+          });
+      },
+      beforeOpen(done, type) {
+        if (["edit", "view"].includes(type)) {
+          getDetail(this.expectationForm.id).then(res => {
+            this.expectationForm = res.data.data;
+          });
+        }
+        done();
+      },
+      searchReset() {
+        this.query = {};
+        this.onLoad(this.expectationPage);
+      },
+      searchChange(params, done) {
+        this.query = params;
+        this.expectationPage.currentPage = 1;
+        this.onLoad(this.expectationPage, params);
+        done();
+      },
+      selectionChange(list) {
+        this.selectionList = list;
+      },
+      selectionClear() {
+        this.selectionList = [];
+        this.$refs.crud.toggleSelection();
+      },
+      currentChange(currentPage){
+        this.expectationPage.currentPage = currentPage;
+      },
+      sizeChange(pageSize){
+        this.expectationPage.pageSize = pageSize;
+      },
+      onLoad(page, params = {}) {
+        this.expectationLoading = true;
+        // 添加筛选条件
+        this.query["referenceSid"]=this.referenceSid;
+
+        getList(page.currentPage, page.pageSize, Object.assign(params, this.query)).then(res => {
+          const data = res.data.data;
+          this.expectationPage.total = data.total;
+          this.expectationData = data.records;
+          this.expectationLoading = false;
+          this.selectionClear();
+        });
+      }
+    }
+  };
+</script>
+
+<style>
+.topToDialogIndex{
+  z-index: 3000 !important;
+}
+</style>

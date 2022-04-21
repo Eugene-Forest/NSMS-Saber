@@ -32,8 +32,11 @@ module.exports = {
         ws: false,
         changeOrigin: true, //支持跨域
         pathRewrite: {
-          '^/api': '/api'
+          '^/api': '/'
         },
+        // 在之前的服务器测试中，路径重写为
+        // '^/api': '/api'
+        // todo 但是这个配置在本地运行会出错，尝试现有重写方法以观察会不会导致服务器中的请求出现问题
       }
     },
   },

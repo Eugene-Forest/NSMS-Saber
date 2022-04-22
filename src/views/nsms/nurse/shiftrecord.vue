@@ -36,12 +36,14 @@
 
       <!--      每行的审核状态的模板-->
       <template slot-scope="{row}" slot="applicationStatus">
-        <el-tag v-show="row.applicationStatus == '0'" type="info">待商议</el-tag>
-        <el-tag v-show="row.applicationStatus == '1'" type="danger">被申请人不同意</el-tag>
-        <el-tag v-show="row.applicationStatus == '2'" type="success">被申请人同意</el-tag>
-        <el-tag v-show="row.applicationStatus == '4'" type="danger">审核驳回</el-tag>
-        <el-tag v-show="row.applicationStatus == '5'" type="success">审核通过</el-tag>
+        <el-tag v-show="row.applicationStatus == '0'" type="info">未商议</el-tag>
+        <el-tag v-show="row.applicationStatus == '1'" type="waring">被申请人不同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '2'" type="primary">被申请人同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '3'" type="primary">待审核</el-tag>
+        <el-tag v-show="row.applicationStatus == '4'" type="danger">护士长驳回</el-tag>
+        <el-tag v-show="row.applicationStatus == '5'" type="success">护士长通过</el-tag>
       </template>
+
 
       <template slot="changeShift" slot-scope="{row}">
         <el-tag effect="plain" type="info" v-show="row.changeShift==0">早班</el-tag>

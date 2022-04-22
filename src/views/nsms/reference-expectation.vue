@@ -22,15 +22,36 @@
                    size="small"
                    icon="el-icon-add"
                    plain
-                   v-if="permission.expectation_add"
+                   v-if="permission.expectation_add&&(state==1)"
                    @click="addExpectation">添 加 排 班 期 望
         </el-button>
         <el-button type="danger"
                    size="small"
                    icon="el-icon-delete"
                    plain
-                   v-if="permission.expectation_delete"
+                   v-if="permission.expectation_delete&&(state==1)"
                    @click="handleDelete">删 除
+        </el-button>
+      </template>
+
+      <template slot-scope="{row,index}" slot="menu">
+        <el-button type="primary"
+                   size="small"
+                   icon="el-icon-view"
+                   v-if="permission.expectation_view"
+                   @click="viewExpectation(row)">查 看
+        </el-button>
+        <el-button type="warning"
+                   size="small"
+                   icon="el-icon-edit"
+                   v-if="permission.expectation_add&&(state==1)"
+                   @click="updateExpectation(row)">编 辑
+        </el-button>
+        <el-button type="danger"
+                   size="small"
+                   icon="el-icon-del"
+                   v-if="permission.expectation_view&&(state==1)"
+                   @click="rowDel(row)">删 除
         </el-button>
       </template>
     </avue-crud>
@@ -46,6 +67,7 @@
       <avue-form v-if="dialogVisible" :option="expectationOption" v-model="expectationForm" ref="formMain">
         <template slot-scope="scope" slot="menuForm">
           <el-button type="success" size="mini" icon="el-icon-success"
+                     v-if="addOrUpdateDialog"
                      @click="handleSubmit"
                      >提 交 保 存
           </el-button>
@@ -116,11 +138,12 @@ import dayjs from "dayjs";
         referenceDateRange:[],
         dialogTitle:'',
         dialogVisible:false,
-        addDialog:false,
         viewDialog:false,
-        editDialog:false,
+        addOrUpdateDialog:false,
+        delBtn:false,
         emptyText: '暂无数据',
         expectationOption: {
+          menuWidth:"380",
           height: 'auto',
           calcHeight: 210,
           searchShow: true,
@@ -131,6 +154,7 @@ import dayjs from "dayjs";
           viewBtn: false,
           editBtn:false,
           addBtn:false,
+          delBtn:false,
           selection: true,
           column: [
             {
@@ -153,11 +177,17 @@ import dayjs from "dayjs";
                 trigger: "blur"
               }]
             },
-            // {
-            //   label: "申请人",
-            //   prop: "nurseSid",
-            //   display:false,
-            // },
+            {
+              label: "申请人",
+              prop: "nurseSid",
+              type: "select",
+              dicUrl: "/api/nsms/nurseinfo/selectAllCo",
+              props: {
+                label: 'name',
+                value: 'id'
+              },
+              display:false,
+            },
             {
               label: "期望类型",
               prop: "expectationType",
@@ -293,10 +323,45 @@ import dayjs from "dayjs";
           })
         })
       },
+      viewExpectation(row){
+        this.dialogTitle="查看排班期望";
+        //布局初始化，通过不同类型的期望显示不同的字段。同时提交验证也需要针对性适应
+        this.dialogVisible=true;
+        this.viewDialog=true;
+        this.addOrUpdateDialog=false;
+        //取消显示默认提交按钮
+        this.expectationOption.submitBtn=false;
+        this.expectationOption.emptyBtn=false;
+        //禁止编辑
+        let expectationType = this.findObject(this.expectationOption.column, 'expectationType');
+        expectationType.disalbed=true;
+        //todo 无法通过配置解决 daterange disalbed 的问题，可能需要对详情显示界面重新设计以 date 形式显示
+        // let dataRange = this.findObject(this.expectationOption.column, 'dataRange');
+        // dataRange.disalbed=true;
+        let dayNumber = this.findObject(this.expectationOption.column, 'dayNumber');
+        dayNumber.disalbed=true;
+        getDetail(row.id).then(res=>{
+          this.expectationForm=res.data.data;
+        })
+      },
+      updateExpectation(row){
+        this.dialogTitle="编辑排班期望";
+        //布局初始化，通过不同类型的期望显示不同的字段。同时提交验证也需要针对性适应
+        this.dialogVisible=true;
+        this.addOrUpdateDialog=true;
+        this.viewDialog=false;
+        //取消显示默认提交按钮
+        this.expectationOption.submitBtn=false;
+        this.expectationOption.emptyBtn=false;
+        getDetail(row.id).then(res=>{
+          this.expectationForm=res.data.data;
+        })
+      },
       addExpectation(){
         //布局初始化，通过不同类型的期望显示不同的字段。同时提交验证也需要针对性适应
         this.dialogVisible=true;
-        this.addDialog=true;
+        this.addOrUpdateDialog=true;
+        this.viewDialog=false;
         this.dialogTitle="添加排班期望";
         //取消显示默认提交按钮
         this.expectationOption.submitBtn=false;
@@ -311,12 +376,21 @@ import dayjs from "dayjs";
         //关闭窗口
         this.dialogVisible=false;
         this.dialogTitle="";
+        this.expectationForm={}
         //清除状态
-        this.addDialog=false;
-        this.viewDialog=false;
-        this.editDialog=false;
         this.expectationOption.submitBtn=true;
         this.expectationOption.emptyBtn=true;
+        if (this.viewDialog){
+          //恢复可编辑状态
+          let expectationType = this.findObject(this.expectationOption.column, 'expectationType');
+          expectationType.disalbed=false;
+          // let dataRange = this.findObject(this.expectationOption.column, 'dataRange');
+          // dataRange.disalbed=false;
+          let dayNumber = this.findObject(this.expectationOption.column, 'dayNumber');
+          dayNumber.disalbed=false;
+        }
+        this.addOrUpdateDialog=false;
+        this.viewDialog=false;
         //刷新
         this.onLoad(this.expectationPage);
       },

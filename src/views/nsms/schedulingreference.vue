@@ -25,6 +25,23 @@
                    v-if="permission.schedulingreference_delete"
                    @click="handleDelete">删 除
         </el-button>
+        <el-button type="warning"
+                   size="small"
+                   icon="el-icon-check"
+                   plain
+                   v-if="permission.schedulingreference_check_state"
+                   @click="handleDelete">状态审核与反审
+        </el-button>
+      </template>
+
+      <template slot-scope="{row,index}" slot="menu">
+        <el-button type="danger"
+                   size="small"
+                   icon="el-icon-view"
+                   plain
+                   v-if="permission.schedulingreference_scheduling&&row.state==2"
+                   @click="scheduling(row)">生 成 排 班 结 果
+        </el-button>
       </template>
 
       <template slot="state" slot-scope="{row}">
@@ -223,6 +240,7 @@
                 value: 'dictKey'
               },
               addDisplay: false,
+              editDisabled:true,
               rules: [{
                 required: true,
                 message: "请输入采用状态",
@@ -258,6 +276,9 @@
       }
     },
     methods: {
+      scheduling(row){
+        //todo 排班，在排班结果出来之前显示加载弹框支持显示结束状态
+      },
       rowSave(row, done, loading) {
         add(row).then(() => {
           done();

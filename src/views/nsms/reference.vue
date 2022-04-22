@@ -19,14 +19,22 @@
                @on-load="onLoad">
       <template slot="menuLeft">
 
+
       </template>
       <template slot-scope="{row,index}" slot="menu">
         <el-button type="danger"
                    size="small"
+                   icon="el-icon-add"
+                   plain
+                   v-if="permission.schedulingreference_add&&row.state==1"
+                   @click="openDrawerToAdd(row)">添 加 期 望
+        </el-button>
+        <el-button type="primary"
+                   size="small"
                    icon="el-icon-view"
                    plain
-                   v-if="permission.schedulingreference_add"
-                   @click="openDrawer(row)">添 加 期 望
+                   v-if="permission.schedulingreference_view&&(row.state!=0)"
+                   @click="openDrawerToView(row)">查 看
         </el-button>
       </template>
 
@@ -50,7 +58,8 @@
 
       </avue-form>
 
-      <reference-expectation :referenceSid="referenceId" :state="state">
+      <reference-expectation
+        :referenceSid="referenceId" :state="state">
 
       </reference-expectation>
     </el-drawer>
@@ -89,7 +98,7 @@
         drawerVisible:false,
         referenceId:'',
         drawerTitle:"",
-        state:1,
+        state:-1,
         option: {
           height: 'auto',
           calcHeight: 210,
@@ -224,6 +233,14 @@
       }
     },
     methods: {
+      openDrawerToAdd(row){
+        this.state=1;
+        this.openDrawer(row);
+      },
+      openDrawerToView(row){
+        this.state=0;
+        this.openDrawer(row);
+      },
       openDrawer(row){
         //获取数据
         getDetail(row.id).then(res=>{
@@ -242,6 +259,7 @@
         this.drawerVisible=false;
         this.referenceId="";
         this.drawerTitle="";
+        this.state=-1;
       },
       rowSave(row, done, loading) {
         add(row).then(() => {

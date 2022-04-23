@@ -1,102 +1,103 @@
 <template>
   <basic-container>
-    <avue-crud :option="expectationOption"
-               :table-loading="expectationLoading"
-               :data="expectationData"
-               :page="expectationPage"
-               :permission="permissionList"
-               :before-open="beforeOpen"
-               v-model="expectationForm"
-               ref="crud"
-               @row-update="rowUpdate"
-               @row-save="rowSave"
-               @row-del="rowDel"
-               @search-change="searchChange"
-               @search-reset="searchReset"
-               @selection-change="selectionChange"
-               @current-change="currentChange"
-               @size-change="sizeChange"
-               @on-load="onLoad">
-      <template slot="menuLeft">
-        <el-button type="primary"
-                   size="small"
-                   icon="el-icon-add"
-                   plain
-                   v-if="permission.expectation_add&&(state==1)"
-                   @click="addExpectation">添 加 排 班 期 望
-        </el-button>
-        <el-button type="danger"
-                   size="small"
-                   icon="el-icon-delete"
-                   plain
-                   v-if="permission.expectation_delete&&(state==1)"
-                   @click="handleDelete">删 除
-        </el-button>
-      </template>
-
-      <template slot-scope="{row,index}" slot="menu">
-        <el-button type="primary"
-                   size="small"
-                   icon="el-icon-view"
-                   v-if="permission.expectation_view"
-                   @click="viewExpectation(row)">查 看
-        </el-button>
-        <el-button type="warning"
-                   size="small"
-                   icon="el-icon-edit"
-                   v-if="permission.expectation_add&&(state==1)"
-                   @click="updateExpectation(row)">编 辑
-        </el-button>
-        <el-button type="danger"
-                   size="small"
-                   icon="el-icon-del"
-                   v-if="permission.expectation_view&&(state==1)"
-                   @click="rowDel(row)">删 除
-        </el-button>
-      </template>
-    </avue-crud>
-
-    <el-dialog id="approval-form"
-               :title="dialogTitle"
-               size="1200px"
-               append-to-body
-               :destroy-on-close="true"
-               @close="handleDialogClose"
-               :visible.sync="dialogVisible">
-
-      <avue-form v-if="dialogVisible" :option="expectationOption" v-model="expectationForm" ref="formMain">
-        <template slot-scope="scope" slot="menuForm">
-          <el-button type="success" size="mini" icon="el-icon-success"
-                     v-if="addOrUpdateDialog"
-                     @click="handleSubmit"
-                     >提 交 保 存
+      <avue-crud :option="expectationOption"
+                 :table-loading="expectationLoading"
+                 :data="expectationData"
+                 :page="expectationPage"
+                 :permission="permissionList"
+                 :before-open="beforeOpen"
+                 v-model="expectationForm"
+                 ref="crud"
+                 @row-update="rowUpdate"
+                 @row-save="rowSave"
+                 @row-del="rowDel"
+                 @search-change="searchChange"
+                 @search-reset="searchReset"
+                 @selection-change="selectionChange"
+                 @current-change="currentChange"
+                 @size-change="sizeChange"
+                 @on-load="onLoad">
+        <template slot="menuLeft">
+          <el-button type="primary"
+                     size="small"
+                     icon="el-icon-add"
+                     plain
+                     v-if="permission.expectation_add&&(state==1)"
+                     @click="addExpectation">添 加 排 班 期 望
           </el-button>
-          <el-button size="mini" icon="el-icon-close"
-                     @click="dialogVisible=false"
-                     > 退 出
+          <el-button type="danger"
+                     size="small"
+                     icon="el-icon-delete"
+                     plain
+                     v-if="permission.expectation_delete&&(state==1)"
+                     @click="handleDelete">删 除
           </el-button>
         </template>
-      </avue-form>
+
+        <template slot-scope="{row,index}" slot="menu">
+          <el-button type="primary"
+                     size="small"
+                     icon="el-icon-view"
+                     v-if="permission.expectation_view"
+                     @click="viewExpectation(row)">查 看
+          </el-button>
+          <el-button type="warning"
+                     size="small"
+                     icon="el-icon-edit"
+                     v-if="permission.expectation_add&&(state==1)"
+                     @click="updateExpectation(row)">编 辑
+          </el-button>
+          <el-button type="danger"
+                     size="small"
+                     icon="el-icon-del"
+                     v-if="permission.expectation_view&&(state==1)"
+                     @click="rowDel(row)">删 除
+          </el-button>
+        </template>
+      </avue-crud>
+
+      <el-dialog id="approval-form"
+                 :title="dialogTitle"
+                 size="1200px"
+                 append-to-body
+                 :destroy-on-close="true"
+                 @close="handleDialogClose"
+                 :visible.sync="dialogVisible">
+
+        <avue-form v-if="dialogVisible" :option="expectationOption" v-model="expectationForm" ref="formMain">
+          <template slot-scope="scope" slot="menuForm">
+            <el-button type="success" size="mini" icon="el-icon-success"
+                       v-if="addOrUpdateDialog"
+                       @click="handleSubmit"
+            >提 交 保 存
+            </el-button>
+            <el-button size="mini" icon="el-icon-close"
+                       @click="dialogVisible=false"
+            > 退 出
+            </el-button>
+          </template>
+        </avue-form>
 
 
-    </el-dialog>
+      </el-dialog>
+
   </basic-container>
 </template>
 
 <script>
-import {getList, getDetail, add, update, remove, getPriority} from "@/api/nsms/expectation";
-  import {mapGetters} from "vuex";
+import {add, getDetail, getList, getPriority, remove, update} from "@/api/nsms/expectation";
+import {mapGetters} from "vuex";
 import {select} from "@/api/nsms/schedulingreference";
 
 import dayjs from "dayjs";
 
-  export default {
+export default {
     name:"reference-expectation",
     props: ['referenceSid','state'],
     data() {
       //对于校验，必须要有所有情况下的callback();不然会出现无法提交的情况，而且这种异常没有报错
       var validateRequire = (rule, value, callback)=>  {
-        if (this.expectationForm.expectationType!==0||this.expectationForm.expectationType!==1){
+        if (this.expectationForm.expectationType!==0&&this.expectationForm.expectationType!==1){
           if (value.length!=2) {
             callback(new Error('请选择时间区间'));
           }
@@ -105,24 +106,55 @@ import dayjs from "dayjs";
             ||dayjs(value[1]).isAfter(this.referenceDateRange[1])){
             callback(new Error('请选择正确的时间区间'));
           }
+          //最后将数值同时赋值为时间区间
+          var number=dayjs(this.expectationForm.dateRange[1]).diff(this.expectationForm.dateRange[0],"day")
+          //number为日期之间的差，需要+1
+          this.expectationForm.dayNumber=number+1;
           callback();
         }else {
+          //对于天数期望，默认时间区间都是排班区间
+          if (this.expectationForm.dateRange[0]!==this.referenceDateRange[0]&&
+          this.expectationForm.dateRange[1]!==this.referenceDateRange[1]){
+            this.expectationForm.dateRange[0]=this.referenceDateRange[0];
+            this.expectationForm.dateRange[1]=this.referenceDateRange[1];
+            // this.$message.error('天数期望，时间区间都是排班区间！');
+            callback(new Error('天数期望，时间区间都是排班区间！'));
+          }
           callback();
         }
       };
       var validateDayNumber = (rule, value, callback)=>  {
         if (value<=0){
-          callback(new Error('请输入至少大于1的数字'));
+          callback(new Error('请输入至少大于等于1的数字'));
         }
-        //判断数值是否合理
-        var number=dayjs(this.referenceDateRange[1]).diff(this.referenceDateRange[0],"day")
-        //number为日期之间的差，需要+1
-        number=number+1;
-        if (value>number){
-          callback(new Error('请输入小于等于'+number+'的数字'));
+        //先判断是哪种类型的排班期望
+        if (this.expectationForm.expectationType!==0&&this.expectationForm.expectationType!==1){
+          //如果不是天数期望，那么天数必须要等于期望区间的天数
+          // console.log(this.expectationForm,"this ex2222")
+          let number=dayjs(this.expectationForm.dateRange[1]).diff(this.expectationForm.dateRange[0],"day");
+          //number为日期之间的差，需要+1
+          // console.log("number1",number,"number1")
+          number=number+1;
+          // console.log(number,"number2")
+          if (value!=number){
+            this.expectationForm.dayNumber=number;
+            // this.$message.warning('天数必须要等于期望区间的天数');
+            callback(new Error('天数必须要等于期望区间的天数: '+number));
+          }
+          //完成校验后，全部符合，记得 callback(); 结束校验
+          callback();
+        }else {
+          //如果是天数期望，那么它的天数只需要在排班期间内即可
+          let number=dayjs(this.referenceDateRange[1]).diff(this.referenceDateRange[0],"day")
+          //number为日期之间的差，需要+1
+          number=number+1;
+          if (value>=number){
+            callback(new Error("天数必须要小于等于"+number));
+          }
+          //完成校验后，全部符合，记得 callback(); 结束校验
+          callback();
         }
-        //完成校验后，全部符合，记得 callback(); 结束校验
-        callback();
+
       };
       return {
         expectationForm: {},
@@ -265,28 +297,33 @@ import dayjs from "dayjs";
       };
     },
     watch:{
-      'expectationForm.expectationType' : function (newValue,oldValue) {
-        if (newValue!=null){
-          if (newValue!==oldValue){
-            // expectationType : 0、1为天数，显示默认排班时间区间
-            if (newValue===0||newValue===1){
-              this.expectationForm.dateRange=this.referenceDateRange;
-              const number=dayjs(this.referenceDateRange[1]).diff(this.referenceDateRange[0],"day")
-              this.expectationForm.dayNumber=number;
-            }else {
-              this.expectationForm.dateRange=[];
-              this.expectationForm.dayNumber=null;
-            }
-          }
-        }
-      },
-      'expectationForm.dateRange' : function (newValue,oldValue) {
-        if (newValue!=null&&newValue.length==2){
-          //number为日期之间的差，需要+1
-          const number=dayjs(newValue[1]).diff(newValue[0],"day");
-          this.expectationForm.dayNumber=number+1;
-        }
-      }
+      // 'expectationForm.expectationType' : {
+      //   handler(newValue,oldValue){
+      //     //判断是否是数值初始化
+      //     if (newValue!=null){
+      //       // expectationType : 0、1为天数，显示默认排班时间区间
+      //       if (newValue===0||newValue===1){
+      //         this.expectationForm.dateRange=this.referenceDateRange;
+      //         // const number=dayjs(this.referenceDateRange[1]).diff(this.referenceDateRange[0],"day")
+      //         // this.expectationForm.dayNumber=number;
+      //       }else {
+      //         this.expectationForm.dateRange=[];
+      //         // this.expectationForm.dayNumber=0;
+      //       }
+      //     }
+      //   },
+      //   immediate:false, // watch侦听操作内的函数不会立刻被执行
+      // },
+      // 'expectationForm.dateRange' : {
+      //   handler(newValue, oldValue) {
+      //     if (newValue!=null&&newValue.length===2){
+      //       //number为日期之间的差，需要+1
+      //       const number=dayjs(newValue[1]).diff(newValue[0],"day");
+      //       this.expectationForm.dayNumber=number+1;
+      //     }
+      //   },
+      //   immediate:false, // watch侦听操作内的函数不会立刻被执行
+      // },
     },
     computed: {
       ...mapGetters(["permission"]),
@@ -353,6 +390,7 @@ import dayjs from "dayjs";
         //取消显示默认提交按钮
         this.expectationOption.submitBtn=false;
         this.expectationOption.emptyBtn=false;
+        //在数据更新前改变监听赋值
         getDetail(row.id).then(res=>{
           this.expectationForm=res.data.data;
         })
@@ -395,7 +433,6 @@ import dayjs from "dayjs";
         this.onLoad(this.expectationPage);
       },
       handleSubmit(){
-        console.log(this.expectationForm)
         this.$refs.formMain.validate(valid => {
           if (valid){
             let data=this.expectationForm;

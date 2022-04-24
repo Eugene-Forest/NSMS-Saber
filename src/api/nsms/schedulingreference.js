@@ -54,3 +54,29 @@ export const select = () => {
     method: 'get'
   })
 }
+
+
+export const changeState = (row) => {
+  return request({
+    url: '/api/nsms/schedulingreference/changeReferenceConfigState',
+    method: 'post',
+    data: row
+  })
+}
+
+export const recheckState = (row) => {
+  return request({
+    url: '/api/nsms/schedulingreference/recheckReferenceConfigState',
+    method: 'post',
+    data: row
+  })
+}
+
+export const scheduling = (row) => {
+  return request({
+    url: '/api/nsms/schedulingreference/scheduling',
+    method: 'post',
+    data: row
+  })
+}
+

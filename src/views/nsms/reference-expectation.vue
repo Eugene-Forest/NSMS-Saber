@@ -370,13 +370,10 @@ export default {
         this.expectationOption.submitBtn=false;
         this.expectationOption.emptyBtn=false;
         //禁止编辑
-        let expectationType = this.findObject(this.expectationOption.column, 'expectationType');
-        expectationType.disalbed=true;
-        //todo 无法通过配置解决 daterange disalbed 的问题，可能需要对详情显示界面重新设计以 date 形式显示
-        // let dataRange = this.findObject(this.expectationOption.column, 'dataRange');
-        // dataRange.disalbed=true;
-        let dayNumber = this.findObject(this.expectationOption.column, 'dayNumber');
-        dayNumber.disalbed=true;
+        this.expectationOption.column.forEach(x => {
+          x.disabled=true;
+        });
+
         getDetail(row.id).then(res=>{
           this.expectationForm=res.data.data;
         })
@@ -418,17 +415,13 @@ export default {
         //清除状态
         this.expectationOption.submitBtn=true;
         this.expectationOption.emptyBtn=true;
-        if (this.viewDialog){
-          //恢复可编辑状态
-          let expectationType = this.findObject(this.expectationOption.column, 'expectationType');
-          expectationType.disalbed=false;
-          // let dataRange = this.findObject(this.expectationOption.column, 'dataRange');
-          // dataRange.disalbed=false;
-          let dayNumber = this.findObject(this.expectationOption.column, 'dayNumber');
-          dayNumber.disalbed=false;
-        }
         this.addOrUpdateDialog=false;
         this.viewDialog=false;
+        //清除查看带来的编辑禁止状态
+        this.expectationOption.column.forEach(x => {
+          if (!['referenceSid','priority'].includes(x.prop))
+          x.disabled=false;
+        });
         //刷新
         this.onLoad(this.expectationPage);
       },

@@ -33,7 +33,7 @@
                    size="small"
                    icon="el-icon-view"
                    plain
-                   v-if="permission.schedulingreference_view&&(row.state!=0)"
+                   v-if="permission.schedulingreference_view"
                    @click="openDrawerToView(row)">查 看
         </el-button>
       </template>

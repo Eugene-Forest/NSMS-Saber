@@ -25,17 +25,54 @@
                    v-if="permission.schedulingreference_delete"
                    @click="handleDelete">删 除
         </el-button>
+        <el-button type="primary"
+                   size="small"
+                   icon="el-icon-s-check"
+                   plain
+                   v-if="permission.schedulingreference_check"
+                   @click="checkReference">状态审核
+        </el-button>
         <el-button type="warning"
                    size="small"
-                   icon="el-icon-check"
+                   icon="el-icon-coordinate"
                    plain
-                   v-if="permission.schedulingreference_check_state"
-                   @click="handleDelete">状态审核与反审
+                   v-if="permission.schedulingreference_recheck"
+                   @click="recheckReference">排班结果状态反审
         </el-button>
       </template>
 
       <template slot-scope="{row,index}" slot="menu">
-        <el-button type="danger"
+        <el-button
+          type="text"
+          class="button-text"
+          icon="el-icon-view"
+          size="mini"
+          plain
+          @click="$refs.crud.rowView(row,index)"
+          v-if="permission.schedulingreference_view"
+        >查看
+        </el-button>
+        <el-button
+          type="text"
+          class="button-text"
+          icon="el-icon-view"
+          size="mini"
+          plain
+          @click="$refs.crud.rowEdit(row,index)"
+          v-if="permission.schedulingreference_edit&&row.state==0"
+        >编辑
+        </el-button>
+        <el-button
+          type="text"
+          class="button-text"
+          icon="el-icon-view"
+          size="mini"
+          plain
+          @click="$refs.crud.rowDel(row)"
+          v-if="permission.schedulingreference_delete&&row.state==0"
+        >删除
+        </el-button>
+        <el-button type="warning"
                    size="small"
                    icon="el-icon-view"
                    plain
@@ -46,16 +83,68 @@
 
       <template slot="state" slot-scope="{row}">
         <el-tag effect="plain" type="info" v-show="row.state==0">未启用</el-tag>
-        <el-tag effect="plain" type="primary" v-show="row.state==1">期望添加</el-tag>
+        <el-tag effect="plain" type="primary" v-show="row.state==1">期望录入</el-tag>
         <el-tag effect="plain" type="warning" v-show="row.state==2">待排班</el-tag>
-        <el-tag effect="plain" type="success" v-show="row.state==3">排班完成</el-tag>
+        <el-tag effect="plain" type="danger" v-show="row.state==3">排班失败</el-tag>
+        <el-tag effect="plain" type="success" v-show="row.state==4">排班完成</el-tag>
       </template>
+
     </avue-crud>
+
+
+    <el-dialog
+      id="approval-form"
+      :title="dialogTitle"
+      size="1200px"
+      append-to-body
+      :destroy-on-close="true"
+      @close="handleDrawerClose"
+      :visible.sync="dialogVisible">
+
+      <avue-form v-if="dialogVisible" :option="option" v-model="form" ref="formMain">
+        <template slot-scope="scope" slot="menuForm">
+          <div v-if="dialogType==='check'">
+            <el-button type="success" size="mini" icon="el-icon-success"
+                       v-if="permission.schedulingreference_check"
+                       @click="handleCheckSubmit">更新排班配置状态
+            </el-button>
+            <el-button size="mini" icon="el-icon-close"
+                       @click="dialogVisible = false">退出状态审核
+            </el-button>
+          </div>
+          <div v-if="dialogType==='recheck'">
+            <el-button size="mini" icon="el-icon-close" round type="danger"
+                       v-if="permission.schedulingreference_recheck"
+                       @click="handleRecheckSubmit">撤销排班结果
+            </el-button>
+            <el-button size="mini" icon="el-icon-close" round
+                       @click="dialogVisible = false">退出排班结果状态反审
+            </el-button>
+          </div>
+        </template>
+      </avue-form>
+    </el-dialog>
+
+    <el-dialog
+      v-if="schedulingLoadingDialogVisible">
+      <div v-loading="schedulingLoading">
+
+      </div>
+    </el-dialog>
   </basic-container>
 </template>
 
 <script>
-  import {getList, getDetail, add, update, remove} from "@/api/nsms/schedulingreference";
+import {
+  getList,
+  getDetail,
+  add,
+  update,
+  remove,
+  changeState,
+  recheckState,
+  scheduling
+} from "@/api/nsms/schedulingreference";
   import {mapGetters} from "vuex";
 
   export default {
@@ -77,6 +166,9 @@
           total: 0
         },
         selectionList: [],
+        dialogVisible:false,
+        dialogTitle:"",
+        dialogType:"",
         option: {
           height: 'auto',
           calcHeight: 210,
@@ -85,7 +177,9 @@
           tip: false,
           border: true,
           index: true,
-          viewBtn: true,
+          viewBtn: false,
+          editBtn:false,
+          delBtn:false,
           selection: true,
           column: [
             {
@@ -264,7 +358,10 @@
           addBtn: this.vaildData(this.permission.schedulingreference_add, false),
           viewBtn: this.vaildData(this.permission.schedulingreference_view, false),
           delBtn: this.vaildData(this.permission.schedulingreference_delete, false),
-          editBtn: this.vaildData(this.permission.schedulingreference_edit, false)
+          editBtn: this.vaildData(this.permission.schedulingreference_edit, false),
+          recheckBtn: this.vaildData(this.permission.schedulingreference_recheck, false),
+          checkBtn: this.vaildData(this.permission.schedulingreference_check, false),
+          schedulingBtn: this.vaildData(this.permission.schedulingreference_scheduling, false)
         };
       },
       ids() {
@@ -278,6 +375,128 @@
     methods: {
       scheduling(row){
         //todo 排班，在排班结果出来之前显示加载弹框支持显示结束状态
+
+        //弹出加载弹窗，仅当服务完成后才退出
+
+
+        scheduling(this.form).then(() => {
+          this.onLoad(this.page);
+          this.$message({
+            type: "success",
+            message: "操作成功!"
+          });
+        }, error => {
+          this.$message({
+            type: "warning",
+            message: "操作失败!"
+          });
+          loading();
+        });
+      },
+      showDrawer(type){
+        this.dialogVisible=true;
+        //通过不同的查看判断是否可以编辑
+        if (["check", "recheck"].includes(type)) {
+          getDetail(this.selectionList[0].id).then(res => {
+            this.form = res.data.data;
+          });
+          //禁止编辑
+          this.option.column.forEach(x => {
+            x.disabled=true;
+          });
+          //禁用原生按钮状态
+          this.option.emptyBtn=false;
+          this.option.submitBtn=false;
+        }
+        if (type==="check"){
+          this.dialogTitle="排班配置状态审核";
+          this.dialogType="check";
+        }
+        else if (type==="recheck"){
+          this.dialogTitle="排班配置状态反审";
+          this.dialogType="recheck";
+        }
+      },
+      checkReference(){
+        //审核配置
+        if (this.selectionList.length === 0||this.selectionList.length>1) {
+          this.$message.warning("请选择一条数据");
+          return;
+        }
+        //判断状态是否正确
+        if ([0,1,2].includes(this.selectionList[0].state)){
+          this.showDrawer("check");
+        }else {
+          this.$message.warning("请确认配置状态是否为：未启用、期望录入或待排班");
+        }
+      },
+      recheckReference(){
+        //反审配置
+        if (this.selectionList.length === 0||this.selectionList.length>1) {
+          this.$message.warning("请选择一条数据");
+          return;
+        }
+        //判断状态是否正确
+        if ([4,5].includes(this.selectionList[0].state)){
+          this.showDrawer("recheck");
+        }else {
+          this.$message.warning("请确认配置状态是否为：排班失败或排班成功");
+        }
+      },
+      handleCheckSubmit(){
+        //判断状态是否符合业务条件
+        //判断状态是否正确
+        if ([0,1,2].includes(this.form.state)){
+          //提交
+          changeState(this.form).then(() => {
+            this.onLoad(this.page);
+            this.$message({
+              type: "success",
+              message: "操作成功!"
+            });
+          }, error => {
+            this.$message({
+              type: "warning",
+              message: "操作失败!"
+            });
+            loading();
+          });
+        }else {
+          this.$message.warning("请确认配置状态是否为：未启用、期望录入或待排班");
+        }
+      },
+      handleRecheckSubmit(){
+        //判断状态是否符合业务条件
+        //判断状态是否正确
+        if ([4,5].includes(this.form.state)){
+          //提交
+          recheckState(this.form).then(() => {
+            this.onLoad(this.page);
+            this.$message({
+              type: "success",
+              message: "操作成功!"
+            });
+          }, error => {
+            this.$message({
+              type: "warning",
+              message: "操作失败!"
+            });
+            loading();
+          });
+        }else {
+          this.$message.warning("请确认配置状态是否为：排班失败或排班成功");
+        }
+      },
+      handleDrawerClose(){
+        this.dialogVisible=false;
+        this.dialogTitle='';
+        //恢复状态
+        this.option.column.forEach(x => {
+          x.disabled=false;
+        });
+        //回复原生按钮状态
+        this.option.emptyBtn=true;
+        this.option.submitBtn=true;
       },
       rowSave(row, done, loading) {
         add(row).then(() => {

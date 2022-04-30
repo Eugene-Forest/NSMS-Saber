@@ -31,10 +31,10 @@
 </template>
 
 <script>
-  import {getList, getDetail, add, update, remove} from "@/api/nsms/stafftime";
-  import {mapGetters} from "vuex";
+import {add, getDetail, getList, remove, update} from "@/api/nsms/stafftime";
+import {mapGetters} from "vuex";
 
-  export default {
+export default {
     data() {
       return {
         form: {},

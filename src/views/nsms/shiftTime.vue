@@ -12,6 +12,7 @@ import FullCalendar from '@fullcalendar/vue'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { formatDate } from '@fullcalendar/vue';
+import {calendar} from "@/api/nsms/stafftime";
 
 export default {
   components: {
@@ -28,7 +29,7 @@ export default {
         },
         dateClick: this.handleDateClick,
         // eventClick:this.handleEventClick,
-        eventOrder:["type","nurseType"],
+        eventOrder:["category","post_type"],
         eventLimit: true, // for all non-agenda views
         views: {
           agenda: {
@@ -81,6 +82,11 @@ export default {
         ]
       }
     }
+  },
+  created() {
+    calendar("2022-05-03").then(res=>{
+      this.calendarOptions.events=res.data.data;
+    })
   },
   methods:{
     handleDateClick: function(arg) {

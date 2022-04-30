@@ -48,3 +48,12 @@ export const update = (row) => {
   })
 }
 
+export const calendar = (date) => {
+  return request({
+    url: '/api/nsms/stafftime/calender',
+    method: 'get',
+    params: {
+      date
+    }
+  })
+}

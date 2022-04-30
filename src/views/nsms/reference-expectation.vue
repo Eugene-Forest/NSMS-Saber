@@ -148,7 +148,7 @@ export default {
           let number=dayjs(this.referenceDateRange[1]).diff(this.referenceDateRange[0],"day")
           //number为日期之间的差，需要+1
           number=number+1;
-          if (value>=number){
+          if (value>number){
             callback(new Error("天数必须要小于等于"+number));
           }
           //完成校验后，全部符合，记得 callback(); 结束校验

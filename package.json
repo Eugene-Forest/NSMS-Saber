@@ -11,6 +11,11 @@
     "test:e2e": "vue-cli-service test:e2e"
   },
   "dependencies": {
+    "@fullcalendar/core": "^5.11.0",
+    "@fullcalendar/daygrid": "^5.11.0",
+    "@fullcalendar/interaction": "^5.11.0",
+    "@fullcalendar/timegrid": "^5.11.0",
+    "@fullcalendar/vue": "^5.11.0",
     "avue-plugin-ueditor": "^0.1.4",
     "axios": ">=0.21.2",
     "babel-polyfill": "^6.26.0",
@@ -18,6 +23,7 @@
     "dayjs": ">=1.8.21",
     "echarts": "^5.1.2",
     "element-ui": "^2.15.1",
+    "fullcalendar": "^5.11.0",
     "js-base64": "^2.5.1",
     "js-cookie": "^2.2.0",
     "mockjs": "^1.0.1-beta3",

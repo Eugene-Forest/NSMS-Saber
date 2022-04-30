@@ -18,19 +18,19 @@
                @size-change="sizeChange"
                @on-load="onLoad">
       <template slot="menuLeft">
-        <el-button type="danger"
-                   size="small"
-                   icon="el-icon-delete"
-                   plain
-                   v-if="permission.schedulingreference_delete"
-                   @click="handleDelete">删 除
-        </el-button>
+<!--        <el-button type="danger"-->
+<!--                   size="small"-->
+<!--                   icon="el-icon-delete"-->
+<!--                   plain-->
+<!--                   v-if="permission.schedulingreference_delete"-->
+<!--                   @click="handleDelete">删 除-->
+<!--        </el-button>-->
         <el-button type="primary"
                    size="small"
                    icon="el-icon-s-check"
                    plain
                    v-if="permission.schedulingreference_check"
-                   @click="checkReference">状态审核
+                   @click="checkReference">配置开关
         </el-button>
         <el-button type="warning"
                    size="small"
@@ -104,9 +104,17 @@
       <avue-form v-if="dialogVisible" :option="option" v-model="form" ref="formMain">
         <template slot-scope="scope" slot="menuForm">
           <div v-if="dialogType==='check'">
+            <el-button type="primary" size="mini" icon="el-icon-success"
+                       v-if="permission.schedulingreference_check"
+                       @click="handleCheckSubmit('ready')">准备排班
+            </el-button>
             <el-button type="success" size="mini" icon="el-icon-success"
                        v-if="permission.schedulingreference_check"
-                       @click="handleCheckSubmit">更新排班配置状态
+                       @click="handleCheckSubmit('on')">启用
+            </el-button>
+            <el-button type="warning" size="mini" icon="el-icon-success"
+                       v-if="permission.schedulingreference_check"
+                       @click="handleCheckSubmit('off')">关闭
             </el-button>
             <el-button size="mini" icon="el-icon-close"
                        @click="dialogVisible = false">退出状态审核
@@ -146,9 +154,27 @@ import {
   scheduling
 } from "@/api/nsms/schedulingreference";
   import {mapGetters} from "vuex";
+import dayjs from "dayjs";
 
   export default {
     data() {
+      var validateDayNumber = (rule, value, callback)=>  {
+        if (value<=0){
+          callback(new Error('请输入至少大于等于1的数字'));
+        }
+        if (this.form.dateRange.length!==2){
+          callback(new Error('请先选择排班区间'));
+        }
+        let number=dayjs(this.form.dateRange[1]).diff(this.form.dateRange[0],"day");
+        //number为日期之间的差，需要+1
+        // console.log("number1",number,"number1")
+        number=number+1;
+        if (value>=number){
+          callback(new Error('天数必须要小于期望区间的天数: '+number));
+        }
+        //完成校验后，全部符合，记得 callback(); 结束校验
+        callback();
+      };
       return {
         form: {},
         // 用来初始化新建表单的默认值
@@ -269,7 +295,7 @@ import {
               prop: "vacationTimes",
               type: "number",
               rules: [
-                // { validator: validateVacationTimes, trigger: 'blur' },
+                { validator: validateDayNumber, trigger: 'blur' },
                 {
                 required: true,
                 message: "请选择排班时间后再填写假期天数",
@@ -375,11 +401,8 @@ import {
     methods: {
       scheduling(row){
         //todo 排班，在排班结果出来之前显示加载弹框支持显示结束状态
-
         //弹出加载弹窗，仅当服务完成后才退出
-
-
-        scheduling(this.form).then(() => {
+        scheduling(row).then(() => {
           this.onLoad(this.page);
           this.$message({
             type: "success",
@@ -411,6 +434,8 @@ import {
         if (type==="check"){
           this.dialogTitle="排班配置状态审核";
           this.dialogType="check";
+          // let state = this.findObject(this.option.column, 'state');
+          // state.disabled=false;
         }
         else if (type==="recheck"){
           this.dialogTitle="排班配置状态反审";
@@ -443,8 +468,15 @@ import {
           this.$message.warning("请确认配置状态是否为：排班失败或排班成功");
         }
       },
-      handleCheckSubmit(){
+      handleCheckSubmit(status){
         //判断状态是否符合业务条件
+        if (status==="off"){
+          this.form.state=0;
+        }else if (status==="on"){
+          this.form.state=1;
+        }else if (status==="ready"){
+          this.form.state=2;
+        }
         //判断状态是否正确
         if ([0,1,2].includes(this.form.state)){
           //提交
@@ -464,6 +496,7 @@ import {
         }else {
           this.$message.warning("请确认配置状态是否为：未启用、期望录入或待排班");
         }
+        this.handleDrawerClose();
       },
       handleRecheckSubmit(){
         //判断状态是否符合业务条件

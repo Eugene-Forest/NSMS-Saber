@@ -43,6 +43,7 @@
   import {getDictionary} from "@/api/system/dict";
   import {getDeptTree} from "@/api/system/dept";
   import {getPostList} from "@/api/system/post";
+  import {getRoleTree} from "@/api/system/role";
 
   export default {
     data() {
@@ -170,6 +171,24 @@
               }]
             },
             {
+              label: "所属角色",
+              prop: "roleId",
+              hide:true,
+              viewDisplay:false,
+              editDisplay:false,
+              type: "tree",
+              dicData: [],
+              props: {
+                label: "title"
+              },
+              slot: true,
+              rules: [{
+                required: true,
+                message: "请选择所属角色",
+                trigger: "click"
+              }]
+            },
+            {
               label: "就职状态",
               prop: "workingCondition",
               type: "select",
@@ -217,6 +236,11 @@
 
         getDictionary({code:"sex"}).then(res => {
           const column = this.findObject(this.option.column, 'gender');
+          column.dicData = res.data.data;
+        });
+
+        getRoleTree().then(res => {
+          const column = this.findObject(this.option.column, "roleId");
           column.dicData = res.data.data;
         });
 

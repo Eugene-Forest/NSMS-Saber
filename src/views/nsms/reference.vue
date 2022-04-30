@@ -26,14 +26,14 @@
                    size="small"
                    icon="el-icon-add"
                    plain
-                   v-if="permission.schedulingreference_add&&row.state==1"
+                   v-if="permission.reference_add&&row.state==1"
                    @click="openDrawerToAdd(row)">添 加 期 望
         </el-button>
         <el-button type="primary"
                    size="small"
                    icon="el-icon-view"
                    plain
-                   v-if="permission.schedulingreference_view"
+                   v-if="permission.reference_view"
                    @click="openDrawerToView(row)">查 看
         </el-button>
       </template>
@@ -218,10 +218,10 @@
       ...mapGetters(["permission"]),
       permissionList() {
         return {
-          addBtn: this.vaildData(this.permission.schedulingreference_add, false),
-          viewBtn: this.vaildData(this.permission.schedulingreference_view, false),
-          delBtn: this.vaildData(this.permission.schedulingreference_delete, false),
-          editBtn: this.vaildData(this.permission.schedulingreference_edit, false)
+          addBtn: this.vaildData(this.permission.reference_add, false),
+          viewBtn: this.vaildData(this.permission.reference_view, false),
+          delBtn: this.vaildData(this.permission.reference_delete, false),
+          editBtn: this.vaildData(this.permission.reference_edit, false)
         };
       },
       ids() {

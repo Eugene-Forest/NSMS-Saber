@@ -1,8 +1,29 @@
 <template>
-  <basic-container>
+  <basic-container
+    v-loading="containerLoading"
+    element-loading-text="获取数据中..."
+    element-loading-spinner="el-icon-loading"
+    element-loading-background="rgba(0, 0, 0, 0.8)">
+    <el-menu mode="horizontal" >
+      <el-menu-item class="left">
+        <span style="font-size: 28px ;color: #000c17">{{dateTitle}}</span>
+      </el-menu-item>
+      <el-menu-item>
+        <el-button icon="el-icon-s-help" @click="todayInit">
+          今天
+        </el-button>
+        <el-button icon="el-icon-caret-left" @click="prevMonthInit">
+          上个月
+        </el-button>
+        <el-button icon="el-icon-caret-right" @click="lastMonthInit">
+          下个月
+        </el-button>
+      </el-menu-item>
+    </el-menu>
     <FullCalendar ref="fullCalendar"  :options="calendarOptions" />
   </basic-container>
 </template>
+
 
 <script src='@fullcalendar/core/main.js'></script>
 <script src='@fullcalendar/core/locales-all.js'></script>
@@ -13,6 +34,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { formatDate } from '@fullcalendar/vue';
 import {calendar} from "@/api/nsms/stafftime";
+import dayjs from "dayjs";
 
 export default {
   components: {
@@ -20,75 +42,80 @@ export default {
   },
   data() {
     return {
+      containerLoading:false,
+      today:dayjs(),
+      dateTitle:"",
       calendarOptions: {
-        themeSystem: 'bootstrap3',
+        events: [],
         plugins: [ dayGridPlugin, interactionPlugin ],
         initialView: 'dayGridMonth',
-        header: {
-          center: 'month,agendaFourDay' // buttons for switching between views
-        },
-        dateClick: this.handleDateClick,
+        // dateClick: this.handleDateClick,
         // eventClick:this.handleEventClick,
-        eventOrder:["category","post_type"],
-        eventLimit: true, // for all non-agenda views
-        views: {
-          agenda: {
-            eventLimit: 6 // adjust to 6 only for agendaWeek/agendaDay
-          }
-        },
-        eventLimitClick:"popover",
+        eventOrder:["category","postType"],
+        // eventLimit: true, // for all non-agenda views
+        // views: {
+        //   agenda: {
+        //     eventLimit: 6 // adjust to 6 only for agendaWeek/agendaDay
+        //   }
+        // },
+        // eventLimitClick:"popover",
         editable:true,
         eventDrop:this.changeShiftDate,
         // eventLimitClick:"day",
-        customButtons: {
-          myCustomButton: {
-            text: '自定义按钮',
-            click: function() {
-              alert('点击了自定义按钮!');
-            }
-          }
-        },
-        // header: {
-        //   left:   'title',
-        //   center: 'myCustomButton',
-        //   right:  'today prev,next'
-        // },
+        // buttonIcons:false,
+        headerToolbar: false,
         locale:'zh',//本地化翻译
-        events: [
-          { title: '张三', date: '2022-04-01',color:'#483D8B',type:0,nurseType:11},
-          { title: '张三', date: '2022-04-02',color: '#483D8B' ,type:0,nurseType:11},
-          { title: '里斯', date: '2022-04-01',color: '#483D8B' ,type:0,nurseType:11},
-          { title: '里斯', date: '2022-04-02',color: '#483D8B',type:0,nurseType:11},
-          { title: '王五', date: '2022-04-01' ,color: '#483D8B',type:0,nurseType:11},
-          { title: '王五', date: '2022-04-02' ,color: '#483D8B',type:0,nurseType:11},
-          { title: 'YY', date: '2022-04-01' ,color: '#483D8B',type:0,nurseType:11},
-          { title: 'YY', date: '2022-04-02' ,color: '#483D8B',type:0,nurseType:11},
-          { title: 'ZZ', date: '2022-04-01' ,color: '#483D8B',type:0,nurseType:11},
-          { title: 'ZZ', date: '2022-04-02' ,color: '#483D8B',type:0,nurseType:11},
-          { title: 'CC', date: '2022-04-01' ,color: '#483D8B',type:0,nurseType:11},
-          { title: 'CC', date: '2022-04-02' ,color: '#483D8B',type:0,nurseType:11},
-          { title: '张三风', date: '2022-04-01',type: 1,nurseType:22},
-          { title: '张三风', date: '2022-04-03',type: 1,nurseType:22},
-          { title: '戴斯', date: '2022-04-01',type: 1,nurseType:22},
-          { title: '戴斯', date: '2022-04-03',type: 1,nurseType:22},
-          { title: '七七', date: '2022-04-01',type: 1,nurseType:22},
-          { title: '七七', date: '2022-04-02',type: 1,nurseType:22},
-          { title: '么么', date: '2022-04-01',type: 1,nurseType:22},
-          { title: '么么', date: '2022-04-03',type: 0,nurseType:22,color: '#483D8B'},
-          { title: '月月', date: '2022-04-01',type: 1,nurseType:22},
-          { title: '月月', date: '2022-04-03',type: 0,nurseType:22,color: '#483D8B'},
-          { title: '悦悦', date: '2022-04-01',type: 1,nurseType:22},
-          { title: '悦悦', date: '2022-04-03',type: 0,nurseType:22,color: '#483D8B'}
-        ]
       }
     }
   },
   created() {
-    calendar("2022-05-03").then(res=>{
+    //弹出加载弹窗，仅当服务完成后才退出
+    this.containerLoading=true;
+    this.today=dayjs().format("YYYY-MM-DD");
+    this.dateTitleFormat(this.today);
+    calendar(this.today).then(res=>{
       this.calendarOptions.events=res.data.data;
+      //弹出加载弹窗，仅当服务完成后才退出
+      this.containerLoading=false;
     })
   },
   methods:{
+    dateTitleFormat(dateString){
+      this.dateTitle=dayjs(dateString).format("YYYY-MM")
+    },
+    todayInit(){
+      //弹出加载弹窗，仅当服务完成后才退出
+      this.containerLoading=true;
+      this.today=dayjs().format("YYYY-MM-DD");
+      this.dateTitleFormat(this.today);
+      calendar(this.today).then(res=>{
+        this.calendarOptions.events=res.data.data;
+        //弹出加载弹窗，仅当服务完成后才退出
+        this.containerLoading=false;
+      })
+    },
+    prevMonthInit(){
+      //弹出加载弹窗，仅当服务完成后才退出
+      this.containerLoading=true;
+      this.today=dayjs(this.today).add(-1,"month").format("YYYY-MM-DD");
+      this.dateTitleFormat(this.today);
+      calendar(this.today).then(res=>{
+        this.calendarOptions.events=res.data.data;
+        //弹出加载弹窗，仅当服务完成后才退出
+        this.containerLoading=false;
+      })
+    },
+    lastMonthInit(){
+      //弹出加载弹窗，仅当服务完成后才退出
+      this.containerLoading=true;
+      this.today=dayjs(this.today).add(1,"month").format("YYYY-MM-DD");
+      this.dateTitleFormat(this.today);
+      calendar(this.today).then(res=>{
+        this.calendarOptions.events=res.data.data;
+        //弹出加载弹窗，仅当服务完成后才退出
+        this.containerLoading=false;
+      })
+    },
     handleDateClick: function(arg) {
       alert('date click! ' , arg.dateStr)
     },

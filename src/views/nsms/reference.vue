@@ -40,9 +40,10 @@
 
       <template slot="state" slot-scope="{row}">
         <el-tag effect="plain" type="info" v-show="row.state==0">未启用</el-tag>
-        <el-tag effect="plain" type="primary" v-show="row.state==1">期望添加</el-tag>
+        <el-tag effect="plain" type="primary" v-show="row.state==1">期望录入</el-tag>
         <el-tag effect="plain" type="warning" v-show="row.state==2">待排班</el-tag>
-        <el-tag effect="plain" type="success" v-show="row.state==3">排班完成</el-tag>
+        <el-tag effect="plain" type="danger" v-show="row.state==3">排班失败</el-tag>
+        <el-tag effect="plain" type="success" v-show="row.state==4">排班完成</el-tag>
       </template>
     </avue-crud>
 

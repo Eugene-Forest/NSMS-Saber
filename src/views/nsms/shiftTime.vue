@@ -13,6 +13,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { formatDate } from '@fullcalendar/vue';
 import {calendar} from "@/api/nsms/stafftime";
+import dayjs from "dayjs";
 
 export default {
   components: {
@@ -84,7 +85,7 @@ export default {
     }
   },
   created() {
-    calendar("2022-05-03").then(res=>{
+    calendar(dayjs( ).format("YYYY-MM-DD")).then(res=>{
       this.calendarOptions.events=res.data.data;
     })
   },

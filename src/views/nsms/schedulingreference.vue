@@ -1,5 +1,9 @@
 <template>
-  <basic-container>
+  <basic-container
+    v-loading="containerLoading"
+    element-loading-text="排班可能需要一点时间，是耐耐心等待"
+    element-loading-spinner="el-icon-loading"
+    element-loading-background="rgba(0, 0, 0, 0.8)">
     <avue-crud :option="option"
                :table-loading="loading"
                :data="data"
@@ -133,12 +137,7 @@
       </avue-form>
     </el-dialog>
 
-    <el-dialog
-      v-if="schedulingLoadingDialogVisible">
-      <div v-loading="schedulingLoading">
 
-      </div>
-    </el-dialog>
   </basic-container>
 </template>
 
@@ -176,6 +175,7 @@ import dayjs from "dayjs";
         callback();
       };
       return {
+        containerLoading:false,
         form: {},
         // 用来初始化新建表单的默认值
         defaultFrom:{
@@ -373,9 +373,7 @@ import dayjs from "dayjs";
       };
     },
     watch:{
-      'from':{
 
-      }
     },
     computed: {
       ...mapGetters(["permission"]),
@@ -402,13 +400,16 @@ import dayjs from "dayjs";
       scheduling(row){
         //todo 排班，在排班结果出来之前显示加载弹框支持显示结束状态
         //弹出加载弹窗，仅当服务完成后才退出
+        this.containerLoading=true;
         scheduling(row).then(() => {
           this.onLoad(this.page);
+          this.containerLoading=false;
           this.$message({
             type: "success",
             message: "操作成功!"
           });
         }, error => {
+          this.containerLoading=false;
           this.$message({
             type: "warning",
             message: "操作失败!"
@@ -519,6 +520,7 @@ import dayjs from "dayjs";
         }else {
           this.$message.warning("请确认配置状态是否为：排班失败或排班成功");
         }
+        this.handleDrawerClose();
       },
       handleDrawerClose(){
         this.dialogVisible=false;

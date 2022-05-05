@@ -83,11 +83,11 @@
         captchaMode: website.captchaMode,
         loginForm: {
           //租户ID
-          tenantId: "000000",
+          tenantId: "586679",
           //用户名
-          username: "admin",
+          username: "h-nurse/n-nurse",
           //密码
-          password: "admin",
+          password: "123456",
           //账户类型
           type: "account",
           //验证码的值

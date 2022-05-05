@@ -11,7 +11,7 @@ export default [{
       i18n: 'dashboard'
     },
     component: () =>
-      import( /* webpackChunkName: "views" */ '@/views/wel/index')
+      import( /* webpackChunkName: "views" */ '@/views/nsms/shiftTime')
   }, {
     path: 'dashboard',
     name: '控制台',

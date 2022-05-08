@@ -6,6 +6,7 @@
                :page="page"
                :permission="permissionList"
                :before-open="beforeOpen"
+               :before-close="beforeClose"
                v-model="form"
                ref="crud"
                @row-update="rowUpdate"
@@ -18,6 +19,12 @@
                @size-change="sizeChange"
                @on-load="onLoad">
       <template slot="menuLeft">
+        <el-button type="primary"
+                   size="small"
+                   icon="el-icon-plus"
+                   v-if="permission.shiftrecord_add"
+                   @click="shiftRecordAdd">新 增
+        </el-button>
         <el-button type="warning"
                    size="small"
                    icon="el-icon-s-check"
@@ -34,14 +41,20 @@
         </el-button>
       </template>
 
+<!--      其中审核状态8~10都是表示此纪录本人是作为被申请者，用来区分换班申请的创建者
+          ，其实际含义以及数据库存储对应0、19、20的状态
+-->
       <!--      每行的审核状态的模板-->
       <template slot-scope="{row}" slot="applicationStatus">
         <el-tag v-show="row.applicationStatus == '0'" type="info">未商议</el-tag>
-        <el-tag v-show="row.applicationStatus == '1'" type="waring">被申请人不同意</el-tag>
-        <el-tag v-show="row.applicationStatus == '2'" type="primary">被申请人同意</el-tag>
-        <el-tag v-show="row.applicationStatus == '3'" type="primary">待审核</el-tag>
-        <el-tag v-show="row.applicationStatus == '4'" type="danger">护士长驳回</el-tag>
-        <el-tag v-show="row.applicationStatus == '5'" type="success">护士长通过</el-tag>
+        <el-tag v-show="row.applicationStatus == '8'"  effect="dark" type="info">未商议</el-tag>
+        <el-tag v-show="row.applicationStatus == '9'"  effect="dark" type="warning">我不同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '10'"  effect="dark" type="primary">我已同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '19'" type="warning">被申请人不同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '20'" type="primary">被申请人同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '30'" type="primary">待审核</el-tag>
+        <el-tag v-show="row.applicationStatus == '40'" type="danger">护士长驳回</el-tag>
+        <el-tag v-show="row.applicationStatus == '50'" type="success">护士长通过</el-tag>
       </template>
 
 
@@ -121,6 +134,7 @@
 import {getList, getDetail, add, update, remove, confer, reConfer} from "@/api/nsms/shiftrecord";
   import {mapGetters} from "vuex";
 import {recheckIn} from "@/api/nsms/leaverecord";
+import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nurseinfo";
 
   export default {
     data() {
@@ -138,6 +152,10 @@ import {recheckIn} from "@/api/nsms/leaverecord";
         formOnLoading: false,
         recheck:false,
         approvalFormTitle: '',
+        //同部门的全部基础人员的id-名字键值字典
+        allBaseNurseDict:[],
+        //同部门的除了自己的基础人员的id-名字键值字典
+        coBaseNurseDict:[],
         option: {
           height: 'auto',
           calcHeight: 210,
@@ -149,13 +167,21 @@ import {recheckIn} from "@/api/nsms/leaverecord";
           viewBtn: true,
           delBtn: false,
           editBtn: false,
+          addBtn:false,
           selection: true,
           column: [
             {
               label: "申请人",
               prop: "applicantSid",
-              addDisplay:false,
-              editDisplay:false,
+              type: "select",
+              dicData:[],
+              // dicUrl: "/api/nsms/nurseinfo/selectAllCo",
+              props: {
+                label: 'name',
+                value: 'id'
+              },
+              addDisabled:true,
+              editDisabled:true,
               rules: [{
                 required: true,
                 message: "请输入申请人",
@@ -166,7 +192,8 @@ import {recheckIn} from "@/api/nsms/leaverecord";
               label: "被请求人",
               prop: "beRequestedSid",
               type: "select",
-              dicUrl: "/api/nsms/nurseinfo/selectCoWorker",
+              dicData:[],
+              // dicUrl: "/api/nsms/nurseinfo/selectCoWorker",
               props: {
                 label: 'name',
                 value: 'id'
@@ -241,8 +268,8 @@ import {recheckIn} from "@/api/nsms/leaverecord";
             {
               label: "审批意见",
               prop: "approvalOpinion",
-              addDisplay:false,
-              editDisplay:false,
+              addDisabled:true,
+              editDisabled:true,
               type: "textarea",
               span: 24,
               minRows: 4,
@@ -289,7 +316,32 @@ import {recheckIn} from "@/api/nsms/leaverecord";
         return ids.join(",");
       }
     },
+    created() {
+      this.init();
+    },
     methods: {
+      init(){
+        //初始化字典
+        selectAllCo().then(res=>{
+          this.allBaseNurseDict=res.data.data;
+          //并将申请人和被申请人的字典赋值
+          const applicantSid = this.findObject(this.option.column, 'applicantSid');
+          const beRequestedSid = this.findObject(this.option.column, 'beRequestedSid');
+          applicantSid.dicData = this.allBaseNurseDict;
+          beRequestedSid.dicData = this.allBaseNurseDict;
+        })
+        selectCoWorkers().then(res=>{
+          this.coBaseNurseDict=res.data.data;
+        })
+      },
+      shiftRecordAdd(){
+        //先在表单中添加申请人的赋值
+        getUserIdAndName().then(res=>{
+          this.form.applicantSid=res.data.data.id;
+        });
+        //调用avue curd的自带的添加方法
+        this.$refs.crud.rowAdd();
+      },
       checkInShiftExchange(){
         if (this.selectionList.length === 0||this.selectionList.length>1) {
           this.$message.warning("请选择一条数据");
@@ -297,7 +349,7 @@ import {recheckIn} from "@/api/nsms/leaverecord";
         }
         //判断是否可以进行审核
         this.form=this.selectionList[0];
-        if (this.form["applicationStatus"]!=0){
+        if (this.form["applicationStatus"]!=8){
           this.form={};
           this.$message.warning("此记录不能审核！请确认其审核状态！");
           return;
@@ -324,7 +376,7 @@ import {recheckIn} from "@/api/nsms/leaverecord";
         }
         //判断是否可以进行反审
         this.form=this.selectionList[0];
-        if (this.form["applicationStatus"]<=0||this.form["applicationStatus"]>=3){
+        if (this.form["applicationStatus"]!=9&&this.form["applicationStatus"]!=10){
           this.form={};
           this.$message.warning("此记录不能反审！请确认其审核状态！");
           return;
@@ -364,9 +416,9 @@ import {recheckIn} from "@/api/nsms/leaverecord";
             if (valid){
               let data=this.form;
               if (flag){
-                data["applicationStatus"]=2;
+                data["applicationStatus"]=20;
               }else {
-                data["applicationStatus"]=1;
+                data["applicationStatus"]=19;
               }
               confer(data).then(() => {
                 this.formOnLoading = false;
@@ -388,7 +440,7 @@ import {recheckIn} from "@/api/nsms/leaverecord";
         this.$refs.formMain.validate(valid => {
           if (valid){
             let data=this.form;
-            if (this.form["applicationStatus"]!=1&&this.form["applicationStatus"]!=2){
+            if (this.form["applicationStatus"]!=9&&this.form["applicationStatus"]!=10){
               this.$message({message:"请检查必填项",type:"warning",customClass:'topToDialogIndex'});
               this.formOnLoading = false;
               //隐藏抽屉
@@ -483,6 +535,17 @@ import {recheckIn} from "@/api/nsms/leaverecord";
           getDetail(this.form.id).then(res => {
             this.form = res.data.data;
           });
+        }
+        if (["edit","add"].includes(type)){
+          const beRequestedSid = this.findObject(this.option.column, 'beRequestedSid');
+          beRequestedSid.dicData=this.coBaseNurseDict;
+        }
+        done();
+      },
+      beforeClose(done, type){
+        if (["edit", "add"].includes(type)){
+          const beRequestedSid = this.findObject(this.option.column, 'beRequestedSid');
+          beRequestedSid.dicData=this.allBaseNurseDict;
         }
         done();
       },

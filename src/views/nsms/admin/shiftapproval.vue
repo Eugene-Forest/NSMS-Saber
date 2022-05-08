@@ -37,11 +37,14 @@
       <!--      每行的审核状态的模板-->
       <template slot-scope="{row}" slot="applicationStatus">
         <el-tag v-show="row.applicationStatus == '0'" type="info">未商议</el-tag>
-        <el-tag v-show="row.applicationStatus == '1'" type="waring">被申请人不同意</el-tag>
-        <el-tag v-show="row.applicationStatus == '2'" type="primary">被申请人同意</el-tag>
-        <el-tag v-show="row.applicationStatus == '3'" type="primary">待审核</el-tag>
-        <el-tag v-show="row.applicationStatus == '4'" type="danger">护士长驳回</el-tag>
-        <el-tag v-show="row.applicationStatus == '5'" type="success">护士长通过</el-tag>
+        <el-tag v-show="row.applicationStatus == '8'"  effect="dark" type="info">未商议</el-tag>
+        <el-tag v-show="row.applicationStatus == '9'"  effect="dark" type="warning">我不同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '10'"  effect="dark" type="primary">我已同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '19'" type="warning">被申请人不同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '20'" type="primary">被申请人同意</el-tag>
+        <el-tag v-show="row.applicationStatus == '30'" type="primary">待审核</el-tag>
+        <el-tag v-show="row.applicationStatus == '40'" type="danger">护士长驳回</el-tag>
+        <el-tag v-show="row.applicationStatus == '50'" type="success">护士长通过</el-tag>
       </template>
 
       <template slot="changeShift" slot-scope="{row}">
@@ -97,8 +100,17 @@
 </template>
 
 <script>
-import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, recheckIn} from "@/api/nsms/shiftrecord";
+import {
+  getDetail,
+  add,
+  update,
+  remove,
+  checkIn,
+  recheckIn,
+  getListForApproval
+} from "@/api/nsms/shiftrecord";
   import {mapGetters} from "vuex";
+import {selectAllCo} from "@/api/nsms/nurseinfo";
 
   export default {
     data() {
@@ -129,10 +141,20 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
           editBtn: false,
           addBtn: false,
           selection: true,
+          menu:false,
           column: [
             {
               label: "申请人",
               prop: "applicantSid",
+              type: "select",
+              dicDate:[],
+              // dicUrl: "/api/nsms/nurseinfo/selectAllCo",
+              props: {
+                label: 'name',
+                value: 'id'
+              },
+              addDisabled:true,
+              editDisabled:true,
               rules: [{
                 required: true,
                 message: "请输入申请人",
@@ -143,7 +165,8 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
               label: "被请求人",
               prop: "beRequestedSid",
               type: "select",
-              dicUrl: "/api/nsms/nurseinfo/selectCoWorker",
+              dicDate:[],
+              // dicUrl: "/api/nsms/nurseinfo/selectAllCo",
               props: {
                 label: 'name',
                 value: 'id'
@@ -230,7 +253,8 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
               label: "审批人",
               prop: "approver",
               type: "select",
-              dicUrl: "/api/nsms/nurseinfo/selectHeadNurse",
+              dicData:[],
+              // dicUrl: "/api/nsms/nurseinfo/selectHeadNurses",
               props: {
                 label: 'name',
                 value: 'id'
@@ -266,7 +290,22 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
         return ids.join(",");
       }
     },
+    created() {
+      this.init();
+    },
     methods: {
+      init(){
+        //初始化字典
+        selectAllCo().then(res=>{
+          //并将申请人和被申请人的字典赋值
+          const applicantSid = this.findObject(this.option.column, 'applicantSid');
+          const beRequestedSid = this.findObject(this.option.column, 'beRequestedSid');
+          const approver = this.findObject(this.option.column, 'approver');
+          applicantSid.dicData = res.data.data;
+          beRequestedSid.dicData = res.data.data;
+          approver.dicData = res.data.data;
+        })
+      },
       checkInShiftExchange(){
         if (this.selectionList.length === 0||this.selectionList.length>1) {
           this.$message.warning("请选择一条数据");
@@ -274,7 +313,7 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
         }
         //判断是否可以进行审核
         this.form=this.selectionList[0];
-        if (this.form["applicationStatus"]<=0||this.form["applicationStatus"]>3){
+        if (this.form["applicationStatus"]<=0||this.form["applicationStatus"]>30){
           this.form={};
           this.$message.warning("此记录不能审核！请确认其审核状态！");
           return;
@@ -303,7 +342,7 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
         }
         //判断是否可以进行反审
         this.form=this.selectionList[0];
-        if (this.form["applicationStatus"]<=3||this.form["applicationStatus"]>5){
+        if (this.form["applicationStatus"]<=30||this.form["applicationStatus"]>50){
           this.form={};
           this.$message.warning("此记录不能反审！请确认其审核状态！");
           return;
@@ -340,9 +379,9 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
             if (valid) {
               let data = this.form;
               if (flag) {
-                data["applicationStatus"] = 5;
+                data["applicationStatus"] = 50;
               } else {
-                data["applicationStatus"] = 4;
+                data["applicationStatus"] = 40;
               }
               checkIn(data).then(() => {
                 this.formOnLoading = false;
@@ -364,7 +403,7 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
         this.$refs.formMain.validate(valid => {
           if (valid) {
             let data = this.form;
-            if (this.form["applicationStatus"]!=5&&this.form["applicationStatus"]!=4){
+            if (this.form["applicationStatus"]!=50&&this.form["applicationStatus"]!=40){
               this.$message({message:"请检查必填项",type:"warning",customClass:'topToDialogIndex'});
               this.formOnLoading = false;
               //隐藏抽屉
@@ -487,7 +526,7 @@ import {getList, getDetail, add, update, remove, confer, checkIn, reConfer, rech
       },
       onLoad(page, params = {}) {
         this.loading = true;
-        getList(page.currentPage, page.pageSize, Object.assign(params, this.query)).then(res => {
+        getListForApproval(page.currentPage, page.pageSize, Object.assign(params, this.query)).then(res => {
           const data = res.data.data;
           this.page.total = data.total;
           this.data = data.records;

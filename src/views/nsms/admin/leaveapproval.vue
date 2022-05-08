@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api/nsms/leaverecord";
+import { getDetail, add, update, remove, recheckIn, checkIn, getListForApproval} from "@/api/nsms/leaverecord";
   import {mapGetters} from "vuex";
   import {getDictionary} from "@/api/system/dict";
 
@@ -190,6 +190,12 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
             {
               label: "申请人",
               prop: "nurseSid",
+              type: "select",
+              dicUrl: "/api/nsms/nurseinfo/selectAllCo",
+              props: {
+                label: 'name',
+                value: 'id'
+              },
               rules: [{
                 required: true,
                 message: "请输入申请人",
@@ -237,6 +243,21 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
               rules: [{
                 required: true,
                 message: "请输入审批意见",
+                trigger: "blur"
+              }]
+            },
+            {
+              label: "审批人",
+              prop: "approver",
+              type: "select",
+              dicUrl: "/api/nsms/nurseinfo/selectHeadNurses",
+              props: {
+                label: 'name',
+                value: 'id'
+              },
+              rules: [{
+                required: true,
+                message: "请输入审批人",
                 trigger: "blur"
               }]
             },
@@ -533,7 +554,7 @@ import {getList, getDetail, add, update, remove, recheckIn, checkIn} from "@/api
       },
       onLoad(page, params = {}) {
         this.loading = true;
-        getList(page.currentPage, page.pageSize, Object.assign(params, this.query)).then(res => {
+        getListForApproval(page.currentPage, page.pageSize, Object.assign(params, this.query)).then(res => {
           const data = res.data.data;
           this.page.total = data.total;
           this.data = data.records;

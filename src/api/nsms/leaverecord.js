@@ -12,6 +12,18 @@ export const getList = (current, size, params) => {
   })
 }
 
+export const getListForApproval = (current, size, params) => {
+  return request({
+    url: '/api/nsms/leaverecord/listForApproval',
+    method: 'get',
+    params: {
+      ...params,
+      current,
+      size,
+    }
+  })
+}
+
 export const getDetail = (id) => {
   return request({
     url: '/api/nsms/leaverecord/detail',

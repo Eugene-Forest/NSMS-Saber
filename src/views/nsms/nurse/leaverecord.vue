@@ -17,7 +17,14 @@
                @current-change="currentChange"
                @size-change="sizeChange"
                @on-load="onLoad">
-
+      <template slot="menuLeft">
+        <el-button type="primary"
+                   size="small"
+                   icon="el-icon-plus"
+                   v-if="permission.leaverecord_add"
+                   @click="leaveRecordAdd">新 增
+        </el-button>
+      </template>
       <!--      每行的审核状态的模板-->
       <template slot-scope="{row}" slot="approvalStatus">
         <el-tag v-show="row.approvalStatus == '0'" type="info">未审核</el-tag>
@@ -61,6 +68,7 @@
 <script>
   import {getList, getDetail, add, update, remove} from "@/api/nsms/leaverecord";
   import {mapGetters} from "vuex";
+  import {getUserIdAndName} from "@/api/nsms/nurseinfo";
 
   export default {
     data() {
@@ -85,8 +93,26 @@
           viewBtn: true,
           delBtn: false,
           editBtn: false,
+          addBtn:false,
           selection: true,
           column: [
+            {
+              label: "申请人",
+              prop: "nurseSid",
+              type: "select",
+              dicUrl: "/api/nsms/nurseinfo/selectAllCo",
+              props: {
+                label: 'name',
+                value: 'id'
+              },
+              addDisabled:true,
+              editDisabled:true,
+              rules: [{
+                required: true,
+                message: "请输入申请人",
+                trigger: "blur"
+              }]
+            },
             {
               label: "请假类别",
               prop: "leaveType",
@@ -150,6 +176,12 @@
               prop: "approvalStatus",
               addDisplay:false,
               editDisplay:false,
+              type: "select",
+              dicUrl: "/api/blade-system/dict/dictionary?code=approval_status",
+              props: {
+                label: 'dictValue',
+                value: 'dictKey'
+              },
               slot:true,
               rules: [{
                 required: true,
@@ -172,8 +204,12 @@
             {
               label: "审批人",
               prop: "approver",
-              addDisplay:false,
-              editDisplay:false,
+              type: "select",
+              dicUrl: "/api/nsms/nurseinfo/selectHeadNurse",
+              props: {
+                label: 'name',
+                value: 'id'
+              },
               rules: [{
                 required: true,
                 message: "请输入审批人",
@@ -204,6 +240,14 @@
       }
     },
     methods: {
+      leaveRecordAdd(){
+        //先在表单中添加申请人的赋值
+        getUserIdAndName().then(res=>{
+          this.form.nurseSid=res.data.data.id;
+        });
+        //调用avue curd的自带的添加方法
+        this.$refs.crud.rowAdd();
+      },
       rowSave(row, done, loading) {
         add(row).then(() => {
           done();

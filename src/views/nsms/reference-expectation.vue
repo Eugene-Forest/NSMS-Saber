@@ -233,7 +233,29 @@ export default {
                 required: true,
                 message: "请输入期望类型",
                 trigger: "blur"
-              }]
+              }],
+              control:(val,form)=>{
+                if (val===1||val===0){
+                  return{
+                    dateRange:{
+                      display:false,
+                      rules:[],
+                    }
+                  }
+                }else {
+                  return{
+                    dateRange:{
+                      display:true,
+                      rules: [{ validator: validateRequire, trigger: 'blur' },
+                        {
+                          required: true,
+                          message: "请选择时间区间",
+                          trigger: "blur"
+                        }]
+                    }
+                  }
+                }
+              }
             },
             {
               label: "优先级",
@@ -304,6 +326,10 @@ export default {
       //       // expectationType : 0、1为天数，显示默认排班时间区间
       //       if (newValue===0||newValue===1){
       //         this.expectationForm.dateRange=this.referenceDateRange;
+      //
+      //         // const dateRange = this.findObject(this.expectationOption.column, 'dateRange');
+      //         // dateRange.disabled=false;
+      //
       //         // const number=dayjs(this.referenceDateRange[1]).diff(this.referenceDateRange[0],"day")
       //         // this.expectationForm.dayNumber=number;
       //       }else {
@@ -429,6 +455,10 @@ export default {
         this.$refs.formMain.validate(valid => {
           if (valid){
             let data=this.expectationForm;
+            //判断类型，对天数类型添加全区间赋值
+            if (data.expectationType===0||data.expectationType===1){
+              data.dateRange=this.referenceDateRange;
+            }
             add(data).then(() => {
               // this.formOnLoading = false;
               //关闭弹窗

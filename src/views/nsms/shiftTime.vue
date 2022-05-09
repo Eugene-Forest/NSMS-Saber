@@ -4,22 +4,6 @@
     element-loading-text="获取数据中..."
     element-loading-spinner="el-icon-loading"
     element-loading-background="rgba(0, 0, 0, 0.8)">
-    <el-menu mode="horizontal" >
-      <el-menu-item class="left">
-        <span style="font-size: 28px ;color: #000c17">{{dateTitle}}</span>
-      </el-menu-item>
-      <el-menu-item>
-        <el-button icon="el-icon-s-help" @click="todayInit">
-          今天
-        </el-button>
-        <el-button icon="el-icon-caret-left" @click="prevMonthInit">
-          上个月
-        </el-button>
-        <el-button icon="el-icon-caret-right" @click="lastMonthInit">
-          下个月
-        </el-button>
-      </el-menu-item>
-    </el-menu>
     <FullCalendar ref="fullCalendar"  :options="calendarOptions" />
   </basic-container>
 </template>
@@ -33,7 +17,7 @@ import FullCalendar from '@fullcalendar/vue'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { formatDate } from '@fullcalendar/vue';
-import {calendar} from "@/api/nsms/stafftime";
+import {calendar, calenderDefault} from "@/api/nsms/stafftime";
 import dayjs from "dayjs";
 
 export default {
@@ -43,10 +27,17 @@ export default {
   data() {
     return {
       containerLoading:false,
-      today:dayjs(),
-      dateTitle:"",
       calendarOptions: {
-        events: [],
+        events: function(fetchInfo, successCallback, failureCallback) {
+          calenderDefault(
+            fetchInfo.start,
+            fetchInfo.end,
+            fetchInfo.timeZone
+          ).then(function (res) {
+            successCallback(res.data.data)
+          });
+        },
+        // events: [],
         plugins: [ dayGridPlugin, interactionPlugin ],
         initialView: 'dayGridMonth',
         // dateClick: this.handleDateClick,
@@ -59,63 +50,36 @@ export default {
         //   }
         // },
         // eventLimitClick:"popover",
-        editable:true,
+        // editable:true,
         eventDrop:this.changeShiftDate,
         // eventLimitClick:"day",
         // buttonIcons:false,
-        headerToolbar: false,
-        locale:'zh',//本地化翻译
+        headerToolbar: {
+          start: 'title', // will normally be on the left. if RTL, will be on the right
+          center: '',
+          end: 'today prev,next' // will normally be on the right. if RTL, will be on the left
+        },
+        buttonText:{
+          today:"返回当前",
+          prev:"<上个月",
+          next:"下个月>",
+        },
+        locale:'zh-cn',//本地化翻译
       }
     }
   },
   created() {
     //弹出加载弹窗，仅当服务完成后才退出
-    this.containerLoading=true;
-    this.today=dayjs().format("YYYY-MM-DD");
-    this.dateTitleFormat(this.today);
-    calendar(this.today).then(res=>{
-      this.calendarOptions.events=res.data.data;
-      //弹出加载弹窗，仅当服务完成后才退出
-      this.containerLoading=false;
-    })
+    // this.containerLoading=true;
+    // this.today=dayjs().format("YYYY-MM-DD");
+    // this.dateTitleFormat(this.today);
+    // calendar(this.today).then(res=>{
+    //   this.calendarOptions.events=res.data.data;
+    //   //弹出加载弹窗，仅当服务完成后才退出
+    //   this.containerLoading=false;
+    // })
   },
   methods:{
-    dateTitleFormat(dateString){
-      this.dateTitle=dayjs(dateString).format("YYYY-MM")
-    },
-    todayInit(){
-      //弹出加载弹窗，仅当服务完成后才退出
-      this.containerLoading=true;
-      this.today=dayjs().format("YYYY-MM-DD");
-      this.dateTitleFormat(this.today);
-      calendar(this.today).then(res=>{
-        this.calendarOptions.events=res.data.data;
-        //弹出加载弹窗，仅当服务完成后才退出
-        this.containerLoading=false;
-      })
-    },
-    prevMonthInit(){
-      //弹出加载弹窗，仅当服务完成后才退出
-      this.containerLoading=true;
-      this.today=dayjs(this.today).add(-1,"month").format("YYYY-MM-DD");
-      this.dateTitleFormat(this.today);
-      calendar(this.today).then(res=>{
-        this.calendarOptions.events=res.data.data;
-        //弹出加载弹窗，仅当服务完成后才退出
-        this.containerLoading=false;
-      })
-    },
-    lastMonthInit(){
-      //弹出加载弹窗，仅当服务完成后才退出
-      this.containerLoading=true;
-      this.today=dayjs(this.today).add(1,"month").format("YYYY-MM-DD");
-      this.dateTitleFormat(this.today);
-      calendar(this.today).then(res=>{
-        this.calendarOptions.events=res.data.data;
-        //弹出加载弹窗，仅当服务完成后才退出
-        this.containerLoading=false;
-      })
-    },
     handleDateClick: function(arg) {
       alert('date click! ' , arg.dateStr)
     },

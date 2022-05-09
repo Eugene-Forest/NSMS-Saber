@@ -313,7 +313,8 @@ import {selectAllCo} from "@/api/nsms/nurseinfo";
         }
         //判断是否可以进行审核
         this.form=this.selectionList[0];
-        if (this.form["applicationStatus"]<=0||this.form["applicationStatus"]>30){
+        //只有在被申请人同意的情况下才可以审核
+        if (this.form["applicationStatus"]!==20){
           this.form={};
           this.$message.warning("此记录不能审核！请确认其审核状态！");
           return;

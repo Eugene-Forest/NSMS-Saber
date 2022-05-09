@@ -127,8 +127,7 @@
           <div v-if="dialogType==='recheck'">
             <el-button size="mini" icon="el-icon-close" round type="danger"
                        v-if="permission.schedulingreference_recheck"
-                       @click="handleRecheckSubmit">撤销排班结果
-            </el-button>
+                       @click="handleRecheckSubmitWithConfirm()">撤销排班结果</el-button>
             <el-button size="mini" icon="el-icon-close" round
                        @click="dialogVisible = false">退出排班结果状态反审
             </el-button>
@@ -498,6 +497,24 @@ import dayjs from "dayjs";
           this.$message.warning("请确认配置状态是否为：未启用、期望录入或待排班");
         }
         this.handleDrawerClose();
+      },
+      handleRecheckSubmitWithConfirm(){
+        this.$confirm('此操作将删除此排班区间内的排班结果, 是否继续?', '提示',{
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }).then(() => {
+          this.handleRecheckSubmit();
+          // this.$message({
+          //   type: 'success',
+          //   message: '操作成功!'
+          // });
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消此操作'
+          });
+        })
       },
       handleRecheckSubmit(){
         //判断状态是否符合业务条件

@@ -179,19 +179,19 @@ import {selectAllCo} from "@/api/nsms/nurseinfo";
               }]
             },
             {
-              label: "交班日期",
+              label: "换班日期",
               prop: "changeDate",
               type: "date",
               format: 'yyyy-MM-dd',
               valueFormat: 'yyyy-MM-dd',
               rules: [{
                 required: true,
-                message: "请输入交班日期",
+                message: "请输入换班日期",
                 trigger: "blur"
               }]
             },
             {
-              label: "交班班次",
+              label: "换班班次",
               prop: "changeShift",
               type: "select",
               slot:true,
@@ -202,12 +202,12 @@ import {selectAllCo} from "@/api/nsms/nurseinfo";
               },
               rules: [{
                 required: true,
-                message: "请输入交班班次",
+                message: "请输入换班班次",
                 trigger: "blur"
               }]
             },
             {
-              label: "交班原因",
+              label: "换班原因",
               prop: "changeResult",
               type: "textarea",
               span: 24,
@@ -216,7 +216,7 @@ import {selectAllCo} from "@/api/nsms/nurseinfo";
               overHidden: true,
               rules: [{
                 required: true,
-                message: "请输入交班原因",
+                message: "请输入换班原因",
                 trigger: "blur"
               }]
             },

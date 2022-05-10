@@ -80,9 +80,9 @@
 
 
       </el-dialog>
-
   </basic-container>
 </template>
+
 
 <script>
 import {add, getDetail, getList, getPriority, remove, update} from "@/api/nsms/expectation";
@@ -188,6 +188,7 @@ export default {
           addBtn:false,
           delBtn:false,
           selection: true,
+          excelBtn:true,
           column: [
             {
               label: "对应的排班依据表",

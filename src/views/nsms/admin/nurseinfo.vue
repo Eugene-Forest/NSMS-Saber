@@ -67,6 +67,7 @@
           index: true,
           viewBtn: true,
           selection: true,
+          excelBtn:true,
           column: [
             {
               label: "姓名",

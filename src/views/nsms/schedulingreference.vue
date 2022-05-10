@@ -206,6 +206,7 @@ import dayjs from "dayjs";
           editBtn:false,
           delBtn:false,
           selection: true,
+          excelBtn:true,
           column: [
             {
               label: "科室编号",
@@ -462,7 +463,7 @@ import dayjs from "dayjs";
           return;
         }
         //判断状态是否正确
-        if ([4,5].includes(this.selectionList[0].state)){
+        if ([3,4].includes(this.selectionList[0].state)){
           this.showDrawer("recheck");
         }else {
           this.$message.warning("请确认配置状态是否为：排班失败或排班成功");
@@ -519,7 +520,7 @@ import dayjs from "dayjs";
       handleRecheckSubmit(){
         //判断状态是否符合业务条件
         //判断状态是否正确
-        if ([4,5].includes(this.form.state)){
+        if ([3,4].includes(this.form.state)){
           //提交
           recheckState(this.form).then(() => {
             this.onLoad(this.page);

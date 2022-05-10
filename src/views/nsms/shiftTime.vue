@@ -37,6 +37,7 @@ export default {
             successCallback(res.data.data)
           });
         },
+        height: 'auto',
         // events: [],
         plugins: [ dayGridPlugin, interactionPlugin ],
         initialView: 'dayGridMonth',

@@ -141,6 +141,7 @@ import {selectAllCo} from "@/api/nsms/nurseinfo";
           editBtn: false,
           addBtn: false,
           selection: true,
+          excelBtn:true,
           menu:false,
           column: [
             {

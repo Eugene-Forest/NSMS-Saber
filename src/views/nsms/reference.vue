@@ -55,14 +55,17 @@
       size="80%"
       @close="handleDrawerClose"
       :visible.sync="drawerVisible">
-      <avue-form v-if="drawerVisible" :option="option" v-model="form" ref="formMain">
+      <el-row>
+        <avue-form v-if="drawerVisible" :option="option" v-model="form" ref="formMain">
 
-      </avue-form>
+        </avue-form>
+      </el-row>
+      <el-row>
+        <reference-expectation
+          :referenceSid="referenceId" :state="state">
 
-      <reference-expectation
-        :referenceSid="referenceId" :state="state">
-
-      </reference-expectation>
+        </reference-expectation>
+      </el-row>
     </el-drawer>
 
   </basic-container>

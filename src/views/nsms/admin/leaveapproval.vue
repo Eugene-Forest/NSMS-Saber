@@ -128,6 +128,7 @@ import { getDetail, add, update, remove, recheckIn, checkIn, getListForApproval}
           editBtn: false,
           addBtn: false,
           selection: true,
+          excelBtn:true,
           column: [
             {
               label: "请假类别",

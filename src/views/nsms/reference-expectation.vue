@@ -241,6 +241,9 @@ export default {
                     dateRange:{
                       display:false,
                       rules:[],
+                    },
+                    dayNumber:{
+                      disabled:false,
                     }
                   }
                 }else {
@@ -253,6 +256,9 @@ export default {
                           message: "请选择时间区间",
                           trigger: "blur"
                         }]
+                    },
+                    dayNumber:{
+                      disabled:true,
                     }
                   }
                 }
@@ -466,9 +472,6 @@ export default {
               // this.handleDialogClose();
               this.dialogVisible=false;
               this.$message({type: 'success', message: '操作成功!'});
-            }, error => {
-              this.$message.error('业务出错！');
-              // console.log(error);
             });
           }else {
             this.$message({message:"请检查必填项",type:"warning",customClass:'topToDialogIndex'});

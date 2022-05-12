@@ -35,13 +35,11 @@ export const getDetail = (id) => {
   })
 }
 
-export const remove = (ids) => {
+export const remove = (objectList) => {
   return request({
     url: '/api/nsms/shiftrecord/remove',
     method: 'post',
-    params: {
-      ids,
-    }
+    data: objectList
   })
 }
 

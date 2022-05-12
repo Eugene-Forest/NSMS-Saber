@@ -294,7 +294,9 @@
           type: "warning"
         })
           .then(() => {
-            return remove(row.id);
+            let objectList=[];
+            objectList.push(row);
+            return remove(objectList);
           })
           .then(() => {
             this.onLoad(this.page);
@@ -315,7 +317,8 @@
           type: "warning"
         })
           .then(() => {
-            return remove(this.ids);
+            // return remove(this.ids);
+            return remove(this.selectionList);
           })
           .then(() => {
             this.onLoad(this.page);

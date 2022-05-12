@@ -12,6 +12,18 @@ export const getList = (current, size, params) => {
   })
 }
 
+export const getUserStaffPlan = (current, size, params) => {
+  return request({
+    url: '/api/nsms/stafftime/page',
+    method: 'get',
+    params: {
+      ...params,
+      current,
+      size,
+    }
+  })
+}
+
 export const getDetail = (id) => {
   return request({
     url: '/api/nsms/stafftime/detail',

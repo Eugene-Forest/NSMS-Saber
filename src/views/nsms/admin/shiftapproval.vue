@@ -184,6 +184,11 @@ import {selectAllCo} from "@/api/nsms/nurseinfo";
               type: "date",
               format: 'yyyy-MM-dd',
               valueFormat: 'yyyy-MM-dd',
+              pickerOptions: {
+                disabledDate(time) {
+                  return time.getTime() < Date.now();
+                },
+              },
               rules: [{
                 required: true,
                 message: "请输入换班日期",

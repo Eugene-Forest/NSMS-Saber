@@ -152,6 +152,11 @@ import { getDetail, add, update, remove, recheckIn, checkIn, getListForApproval}
               type: "date",
               format: 'yyyy-MM-dd',
               valueFormat: 'yyyy-MM-dd',
+              pickerOptions: {
+                disabledDate(time) {
+                  return time.getTime() < Date.now();
+                },
+              },
               rules: [{
                 required: true,
                 message: "请输入请假日期",

@@ -93,9 +93,9 @@
                append-to-body
                :destroy-on-close="true"
                @close="handleDialogClose"
-               :visible.sync="dialogVisible">
+               :visible.sync="drawerVisible">
 
-      <avue-form v-if="dialogVisible" :option="option" v-model="form" ref="formMain">
+      <avue-form v-if="drawerVisible" :option="option" v-model="form" ref="formMain">
         <template slot-scope="scope" slot="menuForm">
           <div v-if="!recheck">
             <el-button type="success" size="mini" icon="el-icon-success"
@@ -107,7 +107,7 @@
                        :loading="formOnLoading">不同意
             </el-button>
             <el-button size="mini" icon="el-icon-close"
-                       @click="dialogVisible = false"
+                       @click="drawerVisible = false"
                        :loading="formOnLoading">退 出 商 议
             </el-button>
           </div>
@@ -117,26 +117,40 @@
                        :loading="formOnLoading">撤 销 商 议 结 果
             </el-button>
             <el-button size="mini" icon="el-icon-close" round
-                       @click="dialogVisible = false"
+                       @click="drawerVisible = false"
                        :loading="formOnLoading">退 出 撤 销 商 议
             </el-button>
           </div>
         </template>
 
       </avue-form>
-
-
     </el-drawer>
+
+<!--    <el-dialog-->
+<!--      id="approval-form"-->
+<!--      :title="drawerTitle"-->
+<!--      :destroy-on-close="true"-->
+<!--      append-to-body-->
+<!--      size="80%"-->
+<!--      @close="handleClose"-->
+<!--      :visible.sync="dialogVisible">-->
+<!--      <el-row>-->
+<!--        <staff-time>-->
+
+<!--        </staff-time>-->
+<!--      </el-row>-->
+<!--    </el-dialog>-->
   </basic-container>
 </template>
 
 <script>
-import {getList, getDetail, add, update, remove, confer, reConfer} from "@/api/nsms/shiftrecord";
-  import {mapGetters} from "vuex";
-import {recheckIn} from "@/api/nsms/leaverecord";
+import {add, confer, getDetail, getList, reConfer, remove, update} from "@/api/nsms/shiftrecord";
+import {mapGetters} from "vuex";
 import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nurseinfo";
+import StaffTime from "@/views/nsms/nurse/stafftime";
 
-  export default {
+export default {
+    components: {StaffTime},
     data() {
       return {
         form: {},
@@ -149,6 +163,7 @@ import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nursein
         },
         selectionList: [],
         dialogVisible:false,
+        drawerVisible:false,
         formOnLoading: false,
         recheck:false,
         approvalFormTitle: '',
@@ -210,6 +225,11 @@ import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nursein
               type: "date",
               format: 'yyyy-MM-dd',
               valueFormat: 'yyyy-MM-dd',
+              pickerOptions: {
+                disabledDate(time) {
+                  return time.getTime() < Date.now();
+                },
+              },
               rules: [{
                 required: true,
                 message: "请输入换班日期",
@@ -355,7 +375,7 @@ import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nursein
           return;
         }
         //打开抽屉
-        this.dialogVisible=true;
+        this.drawerVisible=true;
         this.recheck=false;
         //禁止编辑
         this.option.column.forEach(x => {
@@ -382,7 +402,7 @@ import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nursein
           return;
         }
         //打开抽屉
-        this.dialogVisible=true;
+        this.drawerVisible=true;
         this.recheck=true;
         //禁止编辑
         this.option.column.forEach(x => {
@@ -423,7 +443,7 @@ import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nursein
               confer(data).then(() => {
                 this.formOnLoading = false;
                 //隐藏抽屉
-                this.dialogVisible = false;
+                this.drawerVisible = false;
                 //刷新
                 this.onLoad(this.page);
                 this.$message({type: 'success', message: '操作成功!'});
@@ -444,7 +464,7 @@ import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nursein
               this.$message({message:"请检查必填项",type:"warning",customClass:'topToDialogIndex'});
               this.formOnLoading = false;
               //隐藏抽屉
-              this.dialogVisible = false;
+              this.drawerVisible = false;
               //刷新
               this.onLoad(this.page);
               return;
@@ -452,7 +472,7 @@ import {getUserIdAndName, selectAllCo, selectCoWorkers} from "@/api/nsms/nursein
             reConfer(data).then(() => {
               this.formOnLoading = false;
               //隐藏抽屉
-              this.dialogVisible = false;
+              this.drawerVisible = false;
               //刷新
               this.onLoad(this.page);
               this.$message({type: 'success', message: '操作成功!'});

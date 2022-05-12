@@ -85,7 +85,7 @@
           //租户ID
           tenantId: "586679",
           //用户名
-          username: "h-nurse/n-nurse",
+          username: "h-nurse/n-nurse/y-nurse",
           //密码
           password: "123456",
           //账户类型

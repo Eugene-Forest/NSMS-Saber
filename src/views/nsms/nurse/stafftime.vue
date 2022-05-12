@@ -31,10 +31,11 @@
 </template>
 
 <script>
-import {add, getDetail, getList, remove, update} from "@/api/nsms/stafftime";
+import {add, getDetail, getUserStaffPlan, remove, update} from "@/api/nsms/stafftime";
 import {mapGetters} from "vuex";
 
-export default {
+export default{
+  name:"staff-time",
     data() {
       return {
         form: {},
@@ -246,7 +247,7 @@ export default {
       },
       onLoad(page, params = {}) {
         this.loading = true;
-        getList(page.currentPage, page.pageSize, Object.assign(params, this.query)).then(res => {
+        getUserStaffPlan(page.currentPage, page.pageSize, Object.assign(params, this.query)).then(res => {
           const data = res.data.data;
           this.page.total = data.total;
           this.data = data.records;
